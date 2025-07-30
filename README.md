@@ -73,25 +73,6 @@
 - 결측치 78%를 보간 알고리즘으로 처리 (RandomForest 보간 사용)
 - 성능 비교를 통해 가장 예측률이 높은 모델을 최종 선정
 
-```python
-from sklearn.ensemble import RandomForestRegressor
-model = RandomForestRegressor(n_estimators=100)
-model.fit(X_train, y_train)
-pred = model.predict(X_test)
-⚙️ RPM 추천 알고리즘
-python
-복사
-편집
-best_rpm = None
-min_error = float('inf')
-
-for rpm in range(175, 189):  # 제어 가능한 RPM 범위
-    pred_weight = predict(sensor_data, rpm)
-    error = abs(pred_weight - target_weight)
-
-    if error < min_error:
-        best_rpm = rpm
-        min_error = error
 목표 중량: 3.00g
 
 출력된 추천 RPM: 예측 오차 기준으로 자동 탐색
@@ -104,9 +85,6 @@ for rpm in range(175, 189):  # 제어 가능한 RPM 범위
 공정 데이터의 불규칙성	증강 데이터 생성 및 센서 흐름 기준 시간 단위 정제
 작업자 UI 과도한 정보 혼란	고정형 대시보드 UI 설계, 직관적인 색상 및 간결한 정보로 최소화
 기계 환경 변화 예측 저하	자동/수동 재학습 기능 도입으로 모델 적응력 확보
-
-💻 GitHub 코드
-AutoSense-Factory-best-RPM GitHub Repository
 
 🔎 프로젝트 회고
 🎉 성과
@@ -127,6 +105,3 @@ Flask를 활용한 AI + 웹 시스템 연동 경험
 
 🙋 아쉬운 점
 실제 장비와 직접 연동하지 못하고 시뮬레이션으로만 구현
-
-DB 연동은 향후 적용 고려 (현재는 CSV 기반)
-
