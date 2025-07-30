@@ -1,0 +1,2239 @@
+{% extends 'admin_base.html' %}
+{% block content %}
+
+<!-- ✅ 스타일 정의 -->
+<style>
+/* 📌 기본 레이아웃 및 스타일 */
+.datepicker-container { position: relative; display: inline-block; }
+.datepicker-popup { display: none; position: absolute; top: 30px; z-index: 100; background-color: white; border: 1px solid #ccc; padding: 10px; }
+.hidden-input { display: none; }
+.calendar-icon { cursor: pointer; }
+
+/* 📌 탭 콘텐츠 기본 숨김, 활성 탭만 grid 표시 */
+.tab-content { display: none !important;}
+.tab-content.active { display: grid !important;}
+
+.dashboard-date-filter {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px 20px;
+  background: #000000dc;   
+  border-radius: 20px;
+  margin-bottom: 20px;
+  max-width: 500px;
+  border: 1px solid #333333;
+  box-shadow: 0 0 7px #00bfff;            /* glow 효과 */
+}
+
+
+
+/* 📌 탭 버튼 스타일 */
+.dashboard-date-filter button {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-weight: bold;
+  padding: 6px 10px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.dashboard-date-filter button.active {
+  color: #00bfff;
+  border-bottom: 2px solid #00bfff;
+}
+
+.dashboard-date-filter .date-label {
+  color: #ccc;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 📌 그리드 대시보드 레이아웃 */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 20px;
+  margin-top: 0px;
+  margin-bottom: 30px;
+  width: 100%;
+}
+
+
+
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 20px;        /* ✅ 이것만 쓰고 아래 두 줄 삭제 */
+  /* column-gap: 20px; */
+  /* row-gap: 20px; */
+  margin-top: 0px;
+  margin-bottom: 30px;
+  width: 100%;
+
+  
+}
+
+
+.card-1,
+.card-2,
+.card-3 {
+  height: 200px;  /* 또는 card-4와 비슷한 높이로 */
+}
+
+
+.card {
+  background:  #000000dc;  /*#1e1e1e*/
+  color: white;
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 16px;
+  height: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+
+  border: 1px solid #333333;
+  box-shadow: 0 0 7px #00bfff;            /* glow 효과 */
+}
+
+
+/* 📌 카드 위치 설정 */
+/* 일간 */
+/* 🐳 */
+.card-1 { 
+  grid-column: 1 / 5;
+  background:  #000000dc;  /*#1e1e1e*/
+  color: white;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  font-size: 30px;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden;
+
+ 
+
+  border: 1px solid #333333;
+  box-shadow: 0 0 7px #00bfff;            /* glow 효과 */
+ }
+ /* 🐳 */
+.card-2 { 
+  grid-column: 5 / 9;
+  background:  #000000dc;  /*#1e1e1e*/
+  color: white;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  font-size: 30px;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start !important; 
+  align-items: center;
+  overflow: hidden;
+
+
+
+  border: 1px solid #333333;
+  box-shadow: 0 0 7px #00bfff;            /* glow 효과 */ }
+  /* 🐳 */
+.card-3 { 
+  grid-column: 9 / 13; 
+  background:  #000000dc;  /*#1e1e1e*/
+  color: white;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  font-size: 30px;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden;
+
+  border: 1px solid #333333;
+  box-shadow: 0 0 7px #00bfff;            /* glow 효과 */ }
+
+/* 🐳추가 */
+.card-1,
+.card-2,
+.card-3 {
+  grid-column: span 4;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.card-4 { 
+  grid-column: 1 / 7;
+  padding: 0;
+  border-radius: 10px;
+  text-align: left;
+  /* font-size: 30px; */
+  /* height: 150px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden;
+ }
+  .chart-wrapper {
+  flex: 1;
+  width: 100%;
+}
+.chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.card-5 { 
+  grid-column: 7 / 13;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  /* font-size: 30px; */
+  /* height: 150px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden; 
+}
+
+.card-6 { 
+  grid-column: 1 / 4;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  /* font-size: 30px; */
+  /* height: 150px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden; }
+
+
+.card-7 { 
+  grid-column: 4 / 7;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  /* font-size: 30px; */
+  /* height: 150px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden; }
+.card-8 { 
+  grid-column: 7 / 10;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  /* font-size: 30px; */
+  /* height: 150px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden; }
+.card-9 { 
+  grid-column: 10 / 13;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  /* font-size: 30px; */
+  /* height: 150px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden; }
+
+/* 주간 및 월간 카드 */
+.card-10 { 
+  grid-column: 1 / 7;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  /* font-size: 30px; */
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden; }
+.card-11 { 
+  grid-column: 7 / 13;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  /* font-size: 30px; */
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden; }
+.card-12 { 
+  grid-column: 1 / 13;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  /* font-size: 30px; */
+  /* height: 150px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden; }
+.card-13 { 
+  grid-column: 1 / 4;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  /* font-size: 30px; */
+  /* height: 150px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden; }
+.card-14 { 
+  grid-column: 4 / 7;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  /* font-size: 30px; */
+  /* height: 150px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden; }
+.card-15 { 
+  grid-column: 7 / 10;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  /* font-size: 30px; */
+  /* height: 150px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden; }
+.card-16 { 
+  grid-column: 10 / 13;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  /* font-size: 30px; */
+  /* height: 150px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden; }
+.card-17 { 
+  grid-column: 1 / 7;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  /* font-size: 30px; */
+  /* height: 150px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden; }
+.card-18 { 
+  grid-column: 7 / 13;
+  padding: 0px;
+  border-radius: 10px;
+  text-align: left;
+  /* font-size: 30px; */
+  /* height: 150px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden; }
+
+.progress-details {
+  white-space: nowrap;       /* ✅ 줄바꿈 방지 */
+  color: #ccc;
+  font-size: 28px;
+  font-weight: 500;
+  text-align: center;
+  margin-top: 0px;
+  line-height: 1.6;
+  width: 100%;
+  display: block;
+  margin: 0 auto;
+  padding: 4px 12px;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* 🐳 */
+.progress-details div {
+  width: 100%;
+  text-align: center;
+}
+
+.card h4 {
+  /* background-color: rgba(5, 171, 226, 0.15); */
+  padding: 6px 12px;
+  border-radius: 6px;
+  display: block;
+  font-weight: bold;
+  text-align: left;
+  width: 100%;
+  font-size: 26px;
+  color: rgb(255, 255, 255);
+  margin-top: 0px;          /* ✅ 위 여백 제거 */
+  margin-bottom: 0px;      /* (선택) 아래 여백만 유지 */
+  align-self: stretch;   /* ✅ 부모가 center여도 h4만 예외로 전체 채움 */
+}
+
+/* 🐳 */
+.card-title-wrapper {
+  width: 100%;
+  padding: 8px 16px;
+  box-sizing: border-box;   /* ✅ padding 포함해서 width 계산 */
+  background-color: rgba(5, 171, 226, 0.15);
+  border-radius: 8px 8px 0 0;
+}
+
+
+#dashboard-header {
+  position: sticky;
+  top: 63px;
+  /* left: 80px; */
+  width: 100%;
+  background-color: #050525;
+  z-index: 1000;
+  padding-bottom: 0px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.6);
+  max-width: none !important;   /* 부모 제한 무시 */
+}
+
+tab-day { margin-top: 10px; }
+
+.card canvas {
+  width: 102% !important;
+  height: 200px !important;
+  object-fit: contain;
+}
+.card.chart-card canvas {
+  height: 100% !important; /* ✅ chart-card는 카드 높이에 맞게 꽉 차게 */
+}
+
+
+
+.chart-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 주간 월별 마지막 카드에 대하여 탭 버튼 스타일링 지정*/
+.chart-tabs {
+  display: flex;
+  justify-content: flex-start;
+  background-color: #1b1b1b;
+  padding: 6px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  list-style: none;
+}
+
+.chart-tab {
+  padding: 3px 16px;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #222;
+  color: #ccc;
+  border: 2px solid #333;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap; /* 줄바꿈 방지 */
+}
+
+.chart-tab:hover {
+  background-color: #333;
+  color: #fff;
+}
+
+.chart-tab.active {
+  background-color: #00bfff;
+  color: #fff;
+  border-color: #00bfff;
+}
+
+.tabs {
+  display: flex; /* 한 줄 배치 */
+  gap: 10px;
+  padding: 10px 10px 0px 0px;
+  margin: 0;
+  margin-bottom: 4px !important;
+  list-style: none;
+}
+
+/* ① 차트 카드 전체를 flex-column 컨테이너로 */
+.card.chart-card {
+  display: flex;
+  flex-direction: column;
+  /* 필요시 높이를 강제하고 싶으면 grid-auto-rows 를 조정하세요 */
+  /* 예: height: 300px; */
+  min-height: 0; /* 하위 flex 아이템이 잘릴 때 overflow 방지 */
+}
+
+/* ② 차트 래퍼가 카드의 남은 공간을 전부 차지 */
+.card.chart-card .chart-wrapper {
+  flex: 1;
+  min-height: 0; /* flexbox에서 자식 높이 100%가 먹히도록 */
+  width: 100%;
+}
+
+/* ③ 캔버스는 래퍼 크기에 정확히 맞추기 */
+.card.chart-card .chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+
+
+}
+
+/* ✅ card-17, card-18 전용 - chart-wrapper와 canvas 모두 확장 */
+.card.card-17.chart-card,
+.card.card-18.chart-card {
+  height: 280px;              /* 원하는 카드 높이 */
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.card.card-17.chart-card .chart-wrapper,
+.card.card-18.chart-card .chart-wrapper {
+  width: 100%;
+  height: 100%;
+  padding: 0; /* 혹시 여백 있으면 제거 */
+  margin: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  flex: 1;
+
+}
+
+.card.card-17.chart-card .chart-wrapper canvas,
+.card.card-18.chart-card .chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  box-sizing: border-box;
+  padding-left: 10px;
+}
+
+#week_intervention-bar {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  box-sizing: border-box;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;  /* 왼쪽 제목, 오른쪽 버튼 */
+  align-items: center;
+  width: 100%;
+  padding: 0 12px; /* 좌우 여백 */
+  margin-bottom: 12px;
+}
+
+.chart-header h4 {
+  margin: 0;
+  font-size: 26px;
+  color: white;
+}
+/* ========================센서 */
+/* 실시간 센서 현황 테이블 스타일 */
+#sensor-status-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+#sensor-status-table td {
+  padding: 12px 40px;
+  font-size: 20px;
+  color: #ddd;
+  vertical-align: middle;
+  border-bottom: 1px solid #333;
+}
+
+/* 센서 이름은 왼쪽 정렬, 상태는 오른쪽 정렬 */
+#sensor-status-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+  color: #ccc;
+}
+
+#sensor-status-table td:last-child {
+  text-align: right;
+  font-weight: bold;
+  font-size: 17px;
+}
+
+
+</style>
+
+<!-- ✅ HTML 구조 (대시보드 헤더와 탭 영역) -->
+<div id="dashboard-header">
+  <h2 style="margin: 0; padding: 20px; color: #fff; font-size: 26px;">
+    <img src="/static/images/dashboard_img.png" alt="대시보드 아이콘" style="width: 40px; height: 40px; vertical-align: middle; margin-right: 10px;">
+    Main Dashboard
+  </h2>
+
+  <!-- 📅 탭과 달력 필터 -->
+  <div class="dashboard-date-filter">
+    <button class="tab-btn date-tab-btn" data-target="tab-day">일</button>
+    <button class="tab-btn date-tab-btn" data-target="tab-week">주</button>
+    <button class="tab-btn date-tab-btn" data-target="tab-month">월</button>
+    <span class="date-label">
+      <span id="calendar-icon" style="cursor: pointer;">📅</span>
+      <div id="popup-calendar" style="display: none; position: absolute; top: 120px; left: 205px; z-index: 999;">
+        <input type="date" id="popup-date-picker" />
+      </div>
+      <span id="today-date" style="margin-left: 10px;">로딩 중...</span>
+    </span>
+  </div>
+</div>
+
+<!-- ✅ 탭 콘텐츠 영역 -->
+<div id="tab-day" class="dashboard-grid tab-content active"> <!-- 일 탭 콘텐츠 -->
+  <!-- 🐳 -->
+  <div class="card card-1"><h4 style="color: #00BFFF;">당일 생산량</h4><div class="progress-details"><div style=" font-size: 30px;margin-top: 0px; line-height: 1.2;">목표 생산량: <span id="prod-target">--</span></div><div style="font-size: 30px;">실제 생산량: <span id="prod-actual">--</span></div></div></div>
+  <div class="card card-2"><h4 style="color: #FFE26B;">당일 손실량</h4><div class="progress-details"><div style="font-size: 50px; margin-top: 0px; line-height: 1.2;"><span id="loss-actual">-- g</span></div></div></div>
+  <div class="card card-3"><h4 style="color: #00FF88;">당일 매출액</h4><div class="progress-details"><div style="font-size: 50px; margin-top: 0px; line-height: 1.2;"><span id="profit-actual">-- 원</span></div></div></div>
+  <div class="card card-4 chart-card" style="height: 280px;">
+    <h4>중량 / RPM 추이</h4>
+    <div class="chart-wrapper">
+      <canvas id="rpmChart"></canvas></div>
+    </div>
+  <div class="card card-5 chart-card" style="height: 280px; padding-right: 20px;">
+    <h4 style="color: #FFE26B;">시간대 손실량</h4>
+    <div class="chart-wrapper">
+      <canvas id="lossChart"></canvas></div>
+    </div>
+  <div class="card card-6"><h4 >실시간 센서 현황</h4><table id="sensor-status-table"></table></div>
+  <div class="card card-7"><h4 style="color: #00BFFF;">실시간 생산량</h4><div class="chart-wrapper"><canvas id="prodPieChart"></canvas></div></div>
+  <div class="card card-8"><h4 style="color: #FFE26B;">실시간 손실률</h4><div class="chart-wrapper"><canvas id="lossPieChart"></canvas></div></div>
+  <div class="card card-9"><h4 style="color: #FF5555;">실시간 불량률</h4><div class="chart-wrapper"><canvas id="defectPieChart"></canvas></div></div>
+</div>
+
+<!-- 주간/월간 탭 콘텐츠 구조는 생략됨 (예시만 유지) -->
+<div id="tab-week" class="dashboard-grid tab-content">
+  <!-- 🐳 -->
+  <div class="card card-10"><h4 style="color: #00BFFF;">주간 총 생산량</h4><div class="progress-details"><div style="font-size: 50px; margin-top: 0px; line-height: 1.2;"><span id="realtime-week_sum">로딩 중...</span></div></div></div>
+  <div class="card card-11"><h4 style="color: #FFE26B;">주간 총 손실량</h4><div class="progress-details"><div style="font-size: 50px; margin-top: 0px; line-height: 1.2;"><span id="loss-week_cumulative">로딩 중...</span></div></div></div>
+  <div class="card card-12 chart-card" style="height: 280px;">
+    <h4 style="color: #00FF88;">일별 매출액 <span id="weekly-sales-total" style="font-size: 16px; margin-left: 12px; color: #00FF88;"></span></h4>
+    <div class="chart-wrapper">
+      <canvas id="weekly-sales-bar" class="chart"></canvas>
+    </div>
+  </div>
+  <div class="card card-13"><h4>주간 센서 현황</h4><table class="week_sensor-table" id="sensor-status-table-week"></table></div>
+  <div class="card card-14"><h4 style="color: #00BFFF;">주 총 생산량</h4><canvas id="week_prodPieChart" class="week_chart"></canvas></div>
+  <div class="card card-15"><h4 style="color: #FFE26B;">주 총 손실률</h4><canvas id="week_lossPieChart" class="week_chart"></canvas></div>
+  <div class="card card-16"><h4 style="color: #FF5555;">주 총 불량률</h4><canvas id="week_defectPieChart" class="week_chart"></canvas></div>
+  <div class="card card-17 chart-card">
+    <h4 style="color: #ffffff;">일별 작업자 개입 건수</h4>
+    <div class="chart-wrapper">
+      <canvas id="week_intervention-bar"></canvas>
+    </div>
+  </div>
+    
+  <div class="card card-18 chart-card" style="height: 280px;">
+    <div class="chart-header">
+      <h4>일자별 통계</h4>
+      <div class="tabs">
+        <button class="tab-btn chart-tab week_chart-tab-btn" data-type="production">생산량</button>
+        <button class="tab-btn chart-tab week_chart-tab-btn" data-type="loss">손실률</button>
+        <button class="tab-btn chart-tab week_chart-tab-btn" data-type="defect">불량률</button>
+      </div>
+    </div>
+    
+    <div id="percentage-display" style="font-size: 43px; color: #00ffcc; margin-top: 0px; font-weight: bold;"></div>
+    <div class="chart-wrapper">
+      <canvas id="weekly-chart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div id="tab-month" class="dashboard-grid tab-content">
+  <!-- 🐳 -->
+ <div class="card card-10"><h4 style="color: #00BFFF;">월 총 생산량</h4><div class="progress-details"><div style="font-size: 50px; margin-top: 0px; line-height: 1.2;"><span id="realtime-month_sum">로딩 중...</span></div></div></div>
+ <div class="card card-11"><h4 style="color: #FFE26B;">월 총 손실량</h4><div class="progress-details"><div style="font-size: 50px; margin-top: 0px; line-height: 1.2;"><span id="loss-month_cumulative">로딩 중...</span></div></div></div>
+ 
+ 
+ <div class="card card-12 chart-card">
+  <h4 style="color: #00FF88;">주간별 매출액
+    <span id="monthly-sales-total" style="font-size: 16px; margin-left: 12px; color: #00FF88;"></span>
+  </h4>
+  <div class="chart-wrapper">
+    <canvas id="monthly-sales-bar" class="chart"></canvas>
+  </div>
+</div>
+  
+  <div class="card card-13"><h4>월 센서 현황</h4><table class="month_sensor-table" id="sensor-status-table-month"></table></div>
+  <div class="card card-14"><h4 style="color: #00BFFF;">월 총 생산량</h4><canvas id="month_prodPieChart" class="month_chart"></canvas></div>
+  <div class="card card-15"><h4 style="color: #FFE26B;">월 총 손실률</h4><canvas id="month_lossPieChart" class="month_chart"></canvas></div>
+  <div class="card card-16"><h4 style="color: #FF5555;">월 총 불량률</h4><canvas id="month_defectPieChart" class="month_chart"></canvas></div>
+  
+  <div class="card card-17 chart-card">
+    <div class="chart-header">
+      <h4 style="color: #ffffff;">주간 작업자 개입 건수</h4>
+    </div>
+    <div class="chart-wrapper">
+      <canvas id="monthly_intervention-bar" height="200"></canvas>
+    </div>
+  </div>
+    
+  <div class="card card-18 chart-card">
+    <div class="chart-header">
+      <h4>주별 통계</h4>
+      <div class="tabs">
+        <button class="tab-btn chart-tab month_chart-tab-btn" data-type="month_production">생산량</button>
+        <button class="tab-btn chart-tab month_chart-tab-btn" data-type="month_loss">손실률</button>
+        <button class="tab-btn chart-tab month_chart-tab-btn" data-type="month_defect">불량률</button>
+      </div>
+    </div>
+    <!-- 🐳 percentage-display => mothly-percentage-display로 변경(이유: id 중복으로 총합이 안 뜸) -->
+    <div id="monthly-percentage-display" style="font-size: 43px; color: #00ffcc; margin-top: 0px; font-weight: bold;"></div>
+    <div class="chart-wrapper">
+      <canvas id="monthly-chart"></canvas>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- 탭 동작 스크립트 -->
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const tabButtons = document.querySelectorAll('.date-tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const targetId = button.dataset.target;
+      const targetTab = document.getElementById(targetId);
+      if (!targetTab) return;
+
+      tabButtons.forEach(btn => btn.classList.remove('active'));
+      tabContents.forEach(tab => tab.classList.remove('active'));
+
+      button.classList.add('active');
+      targetTab.classList.add('active');
+    });
+  });
+
+  const defaultBtn = document.querySelector('.date-tab-btn[data-target="tab-day"]');
+  if (defaultBtn) defaultBtn.click(); // 페이지 로드 시 초기화
+
+  const today = new Date();
+  const formatted = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`;
+  document.getElementById('today-date').textContent = formatted;
+});
+</script>
+
+<!-- 주,월 데이터 선택 시 나오는 달력 표시-->
+<script>
+// ✅ 달력 아이콘 클릭 시 input[type="date"] 토글
+document.getElementById('calendar-icon').addEventListener('click', () => {
+  const calendarPopup = document.getElementById('popup-calendar');
+  calendarPopup.style.display = (calendarPopup.style.display === 'block') ? 'none' : 'block';
+});
+
+// ✅ 달력 영역 외 클릭 시 달력 닫힘
+document.addEventListener('click', (e) => {
+  const calendarContainer = document.querySelector('.date-label');
+  if (!calendarContainer.contains(e.target)) {
+    document.getElementById('popup-calendar').style.display = 'none';
+  }
+});
+
+// ✅ 페이지 로드 시 오늘 날짜를 기본값으로 설정
+document.addEventListener('DOMContentLoaded', () => {
+  const picker = document.getElementById('popup-date-picker');
+  const today = new Date().toISOString().split('T')[0];
+  picker.value = today;
+  picker.dispatchEvent(new Event('change')); // 기본 주간 데이터 자동 로드
+});
+</script>
+
+
+<!-- 일 탭 -->
+<script>
+//                           일자탭   1행
+// ========================== 변수 선언 ==========================
+let prodIndex = 0, prodSum = 0, prodValues = [];
+let lossIndex = 0, lossSum = 0, lossValues = [];
+let profitIndex = 0, profitSum = 0;
+
+// ✅ 목표값 설정
+const prodTarget = 2000;     // g
+const profitTarget = 20000;  // 원
+
+// ========================== API 호출 ==========================
+function fetchValues() {
+  fetch('/api/production')
+    .then(res => res.json())
+    .then(data => {
+      prodValues = data.values || [];
+      lossValues = data.loss_values || [];
+
+      updateAll();
+
+      setInterval(updateAll, 500);
+    })
+    .catch(err => {
+      console.error("🚨 API 호출 실패:", err);
+    });
+}
+
+// ========================== 갱신 함수 묶음 ==========================
+function updateAll() {
+  updateProduction();
+  updateLoss();
+  updateProfit();
+  updateTargetDisplay();
+}
+
+// ========================== 생산량 업데이트 ==========================
+function updateProduction() {
+  if (prodIndex < prodValues.length) {
+    prodSum += prodValues[prodIndex];
+    prodIndex++;
+  }
+  document.getElementById("prod-actual").textContent = `${prodSum.toFixed(2)} g`;
+}
+
+// ========================== 손실량 업데이트 ==========================
+function updateLoss() {
+  if (lossIndex < lossValues.length) {
+    lossSum += lossValues[lossIndex];
+    lossIndex++;
+  }
+  document.getElementById("loss-actual").textContent = `${lossSum.toFixed(2)} g`;
+}
+
+// ========================== 매출액 업데이트 ==========================
+function updateProfit() {
+  if (profitIndex < prodValues.length) {
+    const gram = prodValues[profitIndex];
+    profitSum += gram * 7; // 단가 ₩7
+    profitIndex++;
+  }
+  document.getElementById("profit-actual").textContent = `${profitSum.toFixed(2)} 원`;
+}
+
+// ========================== 목표값 텍스트 설정 ==========================
+function updateTargetDisplay() {
+  document.getElementById("prod-target").textContent = `${prodTarget.toLocaleString()} g`;
+  // document.getElementById("profit-target").textContent = `${profitTarget.toLocaleString()} 원`;
+}
+
+// ========================== 실행 시작 ==========================
+window.addEventListener('DOMContentLoaded', fetchValues);
+</script>
+
+<script>
+// ===================================================================================================================================================
+//                          일자탭   2행
+
+// ========================== RPM & 중량 차트 ==========================
+function drawRpmChart() {
+  fetch('/api/production')
+    .then(res => res.json())
+    .then(data => {
+      const scaleData = data.values;
+      const rpmData = data.k_rpm_pv;
+      const ctx = document.getElementById('rpmChart').getContext('2d');
+
+      const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: '중량 (scale_pv)',
+              data: [],
+              borderColor: '#00ffff',
+              yAxisID: 'y-left',
+              fill: false,
+              tension: 0.3
+            },
+            {
+              label: 'RPM (k_rpm_pv)',
+              data: [],
+              borderColor: '#ff4444',
+              yAxisID: 'y-right',
+              fill: false,
+              tension: 0.3
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          scales: {
+            x: {
+              title: { display: true, text: '시간(HH:MM:SS)' },
+              ticks: { color: '#ccc' },
+              grid: { color: '#333' }
+            },
+            'y-left': {
+              position: 'left',
+              title: { display: true, text: '중량 (g)' },
+              ticks: { color: '#ccc' },
+              grid: { color: '#333' },
+              min: 2.7,
+              max: 5
+            },
+            'y-right': {
+              position: 'right',
+              title: { display: true, text: 'RPM' },
+              ticks: { color: '#ccc' },
+              grid: { drawOnChartArea: false },
+              min: 140,
+              max: 200
+            }
+          },
+          plugins: {
+            legend: {
+              labels: { color: '#ccc' }
+            }
+          }
+        }
+      });
+
+      let index = 0;
+      setInterval(() => {
+        if (index < scaleData.length) {
+          const now = new Date();
+          const hours = String(now.getHours()).padStart(2, '0');
+          const minutes = String(now.getMinutes()).padStart(2, '0');
+          const seconds = String(now.getSeconds()).padStart(2, '0');
+          const formattedTime = `${hours}:${minutes}:${seconds}`;   
+          const label = formattedTime
+
+          if (chart.data.labels.length >= 10) {
+            chart.data.labels.shift();
+            chart.data.datasets[0].data.shift();
+            chart.data.datasets[1].data.shift();
+          }
+
+          chart.data.labels.push(label);
+          chart.data.datasets[0].data.push(scaleData[index]);
+          chart.data.datasets[1].data.push(rpmData[index]);
+          chart.update();
+
+          index++;
+        }
+      }, 500);
+    });
+}
+
+// ========================== 시간대별 손실 차트 ==========================
+function drawLossByHourChart() {
+  const redLossCount = Array(24).fill(0);
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString());
+
+  const ctx = document.getElementById('lossChart').getContext('2d');
+  const lossChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: hours,
+      datasets: [{
+        label: '로스 개수',
+        data: redLossCount,
+        backgroundColor: '#FFE26B',
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          title: { display: true, text: '시간대 (0~23시)' },
+          ticks: { color: '#ccc' },
+          grid: { color: '#333' }
+        },
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: '빨간 점 수' },
+          ticks: { color: '#ccc' },
+          grid: { color: '#333' }
+        }
+      },
+      plugins: {
+        legend: {
+          labels: { color: '#ccc' }
+        }
+      }
+    }
+  });
+
+  setInterval(() => {
+    const currentHour = new Date().getHours();
+    redLossCount[currentHour]++;
+    lossChart.update();
+  }, 1000);
+}
+
+// ========================== 실행 시작 ==========================
+window.addEventListener('DOMContentLoaded', () => {
+  drawRpmChart();
+  drawLossByHourChart();
+});
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// ===================================================================================================================================================
+//                          일자탭   3행
+
+ // 📦 전역 변수
+let sensorData = null;                   // API에서 가져온 센서 관련 JSON 데이터를 저장할 변수
+let sensorIndex = 0;                     // 센서 상태 테이블 순환 인덱스 (시간 흐름처럼 표시)
+let pieIndex = 0;                        // 파이 차트 갱신 인덱스
+
+let pieProdChart, pieLossChart, pieDefectChart;  // Chart.js로 생성한 파이 차트 인스턴스 3종
+
+// 아래 두 변수는 주석처리했으므로 전역에서 따로 선언되어야 함
+// let prodValues_pie = [];              // (주석 처리된) 생산량 배열
+// let lossValues_pie = [];              // (주석 처리된) 손실량 배열
+let defectValues = [];                   // 불량 여부 (1: 불량, 0: 정상) 배열
+
+
+// ✅ 센서 및 생산 데이터 불러오기 (API 호출)
+async function fetchSensorData() {
+  try {
+    const res = await fetch('/api/production');     // 서버에서 생산/센서 데이터 요청
+    const data = await res.json();                  // 응답 JSON 파싱
+
+    sensorData = data;                              // 센서 관련 이상치 데이터를 저장
+    prodValues = data.values || [];                 // 생산량 데이터 (배열)
+    lossValues = data.loss_values || [];            // 손실량 데이터 (배열)
+    defectValues = data.defect_values || [];        // 불량 여부 배열
+
+    updateSensorStatusTable();                      // 센서 테이블 초기 업데이트
+  } catch (err) {
+    console.error("🚨 센서 데이터 요청 실패:", err); // 오류 로그 출력
+  }
+};
+
+// ✅ 센서 상태 테이블 갱신 (❌ / ✅)
+function updateSensorStatusTable() {
+  if (!sensorData) return; // 데이터 없으면 중단
+
+  const table = document.getElementById('sensor-status-table');
+  if (!table) return; // 테이블 요소 없으면 중단
+
+  // 각 센서별 키와 이름 정의
+  const rows = [
+    { name: '사출 온도', key: 'n_temp_pv_is_outlier' },
+    { name: '챔버 온도', key: 'c_temp_pv_is_outlier' },
+    { name: 'RPM', key: 'k_rpm_pv_is_outlier' },
+    { name: '스크류 속도', key: 'E_scr_pv_is_outlier' },
+    { name: '스크류 온도', key: 's_temp_pv_is_outlier' }
+  ];
+
+  table.innerHTML = ''; // 기존 테이블 내용 초기화
+
+  rows.forEach(sensor => {
+    const arr = sensorData[sensor.key];                          // 해당 센서 데이터 배열
+    const isOutlier = sensorIndex < arr.length ? arr[sensorIndex] : false; // 현재 인덱스의 이상 여부
+
+    // 테이블 행 구성
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${sensor.name}</td>
+                     <td style="font-size: 20px; color: ${isOutlier ? '#ff4477' : '#00ff00'};">
+                       ${isOutlier ? '<span style="color: #FF5555;">██████</span>' : '<span style="color: #00cc66;">██████</span>'}
+                     </td>`;
+    table.appendChild(row);  // 테이블에 행 추가
+  });
+
+  // 다음 순환 인덱스로 이동 (반복적으로 돌기 위함)
+  sensorIndex = (sensorIndex + 1) % (sensorData['k_rpm_pv_is_outlier']?.length || 1);
+}
+
+// ✅ 파이 차트 초기화 (Chart.js 사용)
+function initPieCharts() {
+  pieProdChart = createPieChart('prodPieChart', ['생산', '남은 양'], [0, 100], ['#00BFFF', '#333']);
+  pieLossChart = createPieChart('lossPieChart', ['손실', '정상'], [0, 100], ['#FFE26B', '#333']);
+  pieDefectChart = createPieChart('defectPieChart', ['불량', '정상'], [0, 1], ['#FF5555', '#333']);
+}
+
+// ✅ Chart.js 파이 차트 생성 함수 (캔버스 ID별로 차트 생성)
+
+function createPieChart(id, labels, data, colors) {
+  const ctx = document.getElementById(id).getContext('2d');
+  const centerTextPlugin = {
+  id: 'centerText',
+  beforeDraw(chart) {
+    const { ctx, width, height, data } = chart;
+
+    // ① 데이터 배열을 숫자로 바꿔서
+    const values = data.datasets[0].data.map(v => Number(v) || 0);
+    const sum    = values.reduce((a, b) => a + b, 0) || 1;
+    // ② 첫 번째 조각(예: 생산량)의 비율 계산
+    const pct    = ((values[0] / sum) * 100).toFixed(1) + '%';
+
+    // ③ 캔버스에 그리기
+    ctx.save();
+    ctx.font = 'bold 24px sans-serif';
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top' ;
+    ctx.fillText(pct, width / 2, height / 2);
+    ctx.restore();
+  }
+};
+
+  return new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colors
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      cutout: '75%',
+      plugins: {
+        legend: { labels: { color: '#fff' } },
+        // datalabels 설정은 필요 없으시면 지워도 됩니다
+      }
+    },
+    // DataLabels랑 함께 쓰실 거면 두 개, 
+    // 중앙 텍스트만 원하시면 centerTextPlugin만 넣으세요.
+    plugins: [ centerTextPlugin ]
+  })};
+
+// ✅ 파이 차트 갱신 함수 (step-by-step으로 생산/손실/불량률 시각화)
+function updatePieCharts() {
+  if (pieIndex >= prodValues.length) return; // 모든 값 표시 완료되면 종료
+
+  // 누적 생산량 계산
+  const produced = prodValues.slice(0, pieIndex + 1).reduce((a, b) => a + b, 0);
+  const totalTarget = 2500; // 목표 생산량
+  const remaining = Math.max(0, totalTarget - produced); // 남은 양 계산
+
+  // 누적 손실량 및 정상 생산량 계산
+  const loss = lossValues.slice(0, pieIndex + 1).reduce((a, b) => a + b, 0);
+  const normal = Math.max(0, produced - loss);
+
+  // 불량 개수 및 정상 개수 계산
+  const defectTotal = defectValues.slice(0, pieIndex + 1).length;
+  const defectCount = defectValues.slice(0, pieIndex + 1).filter(v => v === 1).length;
+  const normalCount = defectTotal - defectCount;
+
+  // 파이 차트 데이터 업데이트
+  pieProdChart.data.datasets[0].data = [produced.toFixed(2), remaining.toFixed(2)];
+  pieLossChart.data.datasets[0].data = [loss.toFixed(2), normal.toFixed(2)];
+  pieDefectChart.data.datasets[0].data = [defectCount, normalCount];
+
+  // 차트 갱신 적용
+  pieProdChart.update();
+  pieLossChart.update();
+  pieDefectChart.update();
+
+  pieIndex++; // 다음 인덱스로 이동
+}
+
+// ✅ 페이지 로딩 완료 시 실행되는 초기화 코드
+window.addEventListener('DOMContentLoaded', () => {
+  initPieCharts();         // 파이 차트 초기화
+  fetchSensorData();       // 센서 + 생산 데이터 API 호출
+
+  // 주기적 자동 갱신 설정
+  setInterval(updateSensorStatusTable, 1000);  // 센서 상태 테이블 1초마다 갱신
+  setInterval(updatePieCharts, 1000);          // 파이 차트도 1초마다 업데이트
+});
+// ===================================================================================================================================================
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+<!-- 주 탭 -->
+<script>
+// ✅ 전역 변수 정의
+let weeklyData = null;
+let weeklyChartRefs = {}; // Chart.js 인스턴스 재사용용 저장소
+const weekLabelsKor = ['월', '화', '수', '목', '금', '토', '일'];
+
+// ✅ 기준 날짜로부터 해당 주(월~일)의 날짜 문자열 리스트 생성
+function getWeeklyDateStrings(baseDate) {
+  const date = new Date(baseDate);
+  const mondayOffset = (date.getDay() + 6) % 7;
+  date.setDate(date.getDate() - mondayOffset);
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(date);
+    d.setDate(date.getDate() + i);
+    return d.toISOString().split('T')[0];
+  });
+}
+
+// ✅ 기준 날짜로부터 해당 주(월~일)의 Date 객체 리스트 생성
+function getWeeklyDateRange(baseDateStr) {
+  const date = new Date(baseDateStr);
+  const offset = (date.getDay() + 6) % 7;
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - offset);
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
+  });
+}
+
+// ✅ 전체 데이터를 서버에서 비동기 로딩
+async function fetchWeeklyData() {
+  const res = await fetch('/api/production_all');
+  return await res.json();
+}
+
+// ✅ 주간 생산, 손실, 불량 요약
+function summarizeWeek(data, weekDates) {
+  const { labels_all, values_all, loss_values_all, defect_values_all } = data;
+  let total = { prod: 0, loss: 0, defect: 0, count: 0 };
+
+  labels_all.forEach((label, i) => {
+    const day = label.split(' ')[0];
+    if (weekDates.includes(day)) {
+      total.prod += values_all[i] || 0;
+      total.loss += loss_values_all[i] || 0;
+      total.defect += defect_values_all[i] || 0;
+      total.count++;
+    }
+  });
+
+  return total;
+}
+
+// ✅ 주간 생산/손실 텍스트 표시
+function renderWeeklyProductionText(total) {
+  document.getElementById('realtime-week_sum').textContent = `${total.prod.toFixed(2)} g`;
+}
+
+function renderWeeklyLossText(total) {
+  document.getElementById('loss-week_cumulative').textContent = `${total.loss.toFixed(2)} g`;
+}
+
+function createOrUpdatePieChart(id, chartRef, labels, data, colors) {
+  const canvas = document.getElementById(id);
+  if (!canvas || !canvas.getContext) {
+    console.warn(`⚠️ Canvas with id=${id} not found.`);
+    return;
+  }
+  const ctx = canvas.getContext('2d');
+
+  // 퍼센트 중앙 텍스트용 플러그인
+  const centerTextPlugin = {
+    id: 'centerText',
+    beforeDraw(chart) {
+      const { ctx, width, height, data } = chart;
+      const values = data.datasets[0].data.map(v => Number(v) || 0);
+      const sum = values.reduce((a, b) => a + b, 0) || 1;
+      const pct = ((values[0] / sum) * 100).toFixed(1) + '%';
+
+      ctx.save();
+      ctx.font = 'bold 40px sans-serif'; // ✅ 중앙 텍스트: 30px
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(pct, width / 2, height / 2);
+      ctx.restore();
+    }
+  };
+
+  // 기존 차트 제거 (옵션 강제 적용 위해)
+  if (chartRef[id]) {
+    chartRef[id].destroy();
+  }
+
+  // 새 차트 생성
+  chartRef[id] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colors
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '70%',
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            color: '#fff',
+            font: {
+              size: 20,       // ✅ 범례 폰트: 20px
+              weight: 'bold',
+              family: 'sans-serif'
+            },
+            padding: 16
+          }
+        },
+        tooltip: {
+          bodyFont: {
+            size: 16
+          },
+          callbacks: {
+            label: function (context) {
+              const label = context.label || '';
+              const value = context.raw || 0;
+              return `${label}: ${value}`;
+            }
+          }
+        }
+      },
+      layout: {
+        padding: {
+          top: 0,
+          bottom: 0
+        }
+      }
+    },
+    plugins: [centerTextPlugin]
+  });
+}
+
+
+
+// ✅ 파이차트 3종 업데이트
+function updateWeeklyPieCharts(total) {
+  const goal = 2500;
+  createOrUpdatePieChart('week_prodPieChart', weeklyChartRefs, ['생산', '미달'], [total.prod, Math.max(0, goal - total.prod)], ['#00BFFF', '#333']);
+  createOrUpdatePieChart('week_lossPieChart', weeklyChartRefs, ['손실', '정상'], [total.loss, Math.max(0, total.prod - total.loss)], ['#FFE26B', '#333']);
+  createOrUpdatePieChart('week_defectPieChart', weeklyChartRefs, ['불량', '정상'], [total.defect, total.count - total.defect], ['#FF5555', '#333']);
+}
+
+// ✅ 센서 상태 테이블 렌더링
+function renderWeeklySensorStatus(data, weekDates) {
+  const keys = {
+    '사출 온도': 'n_temp_pv_all_is_outlier',
+    '챔버 온도': 'c_temp_pv_all_is_outlier',
+    'RPM': 'k_rpm_pv_all_is_outlier',
+    '스크류 속도': 'E_scr_pv_all_is_outlier',
+    '스크류 온도': 's_temp_pv_all_is_outlier'
+  };
+
+  const counts = {};
+  Object.entries(keys).forEach(([label, key]) => {
+    const series = data[key];
+    let count = 0;
+    data.labels_all.forEach((time, i) => {
+      const dateStr = time.split(' ')[0];
+      if (weekDates.includes(dateStr) && series[i] === 0) count++;
+    });
+    counts[label] = count;
+  });
+
+  const table = document.getElementById('sensor-status-table-week');
+  if (!table) return;
+  table.innerHTML = '';
+  Object.entries(counts).forEach(([name, cnt]) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${name}</td><td style="font-weight:bold; color:${cnt > 0 ? '#ff4444' : '#00ff00'}">${cnt} 회</td>`;
+    table.appendChild(row);
+  });
+}
+
+function renderWeeklyInterventionChart(data, weekDates) {
+  const pvSeries = data.scale_pv_all;
+  const labels = data.labels_all;
+
+  const dayMap = {};
+  weekDates.forEach(d => { dayMap[d] = 0; });
+
+  let currentDate = null;
+  let streak = 0;
+
+  for (let i = 0; i < labels.length; i++) {
+    const dateStr = labels[i].split(' ')[0];
+    const val = pvSeries[i];
+
+    if (!weekDates.includes(dateStr)) continue;
+
+    if (currentDate !== dateStr) {
+      currentDate = dateStr;
+      streak = 0;
+    }
+
+    if (val < 2.9 || val > 3.3) {
+      streak++;
+      if (streak === 20) {
+        dayMap[dateStr]++;
+        streak = 0; // 초기화
+      }
+    } else {
+      streak = 0;
+    }
+  }
+
+  const labelsKor = weekDates.map(d => {
+    const dd = new Date(d);
+    const dayName = ['일', '월', '화', '수', '목', '금', '토'][dd.getDay()];
+    return `${d.slice(5)} (${dayName})`;
+  });
+
+  const counts = weekDates.map(d => dayMap[d] || 0);
+
+  const ctx = document.getElementById('week_intervention-bar')?.getContext('2d');
+  if (!ctx) return;
+
+  if (weeklyChartRefs.intervention) {
+    weeklyChartRefs.intervention.data.labels = labelsKor;
+    weeklyChartRefs.intervention.data.datasets[0].data = counts;
+    weeklyChartRefs.intervention.update();
+  } else {
+    weeklyChartRefs.intervention = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labelsKor,
+        datasets: [{
+          label: '작업자 개입',
+          data: counts,
+          backgroundColor: '#ffaa00',
+          barPercentage: 0.5,
+          categoryPercentage: 0.7
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: {
+            top: 5,
+            left: 5
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          datalabels : {
+          anchor: 'end',
+          align: 'top',
+          formatter: v => v.toLocaleString(),
+          color: '#fff',
+          font: { weight: 'bold', size: 16 }
+        },
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.parsed.y} 회`
+            }
+          }
+        },
+        scales: {
+          y: {
+            grid: {color: '#333'},
+            beginAtZero: true,
+            ticks: { color: '#ccc', font: {size: 18, weight: 'bold'} }
+          },
+          x: { grid: {color: '#333'}, ticks: { color: '#ccc', font: {size: 18, weight: 'bold'}  } }
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+  }
+}
+
+// ✅ 매출 차트 생성
+function renderWeeklySalesChart(selectedDate) {
+  if (!weeklyData) return;
+  const weekRange = getWeeklyDateRange(selectedDate);
+  const dailyGrams = new Array(7).fill(0);
+  const labels = weeklyData.labels_all;
+  const values = weeklyData.values_all;
+
+  labels.forEach((label, i) => {
+    const d = new Date(label);
+    weekRange.forEach((target, idx) => {
+      if (d.toDateString() === target.toDateString()) {
+        dailyGrams[idx] += values[i] || 0;
+      }
+    });
+  });
+
+  const PRICE_PER_GRAM = 5;
+  const sales = dailyGrams.map(g => +(g * PRICE_PER_GRAM).toFixed(2));
+  const total = sales.reduce((sum, v) => sum + v, 0).toLocaleString();
+  const totalEl = document.getElementById('weekly-sales-total');
+  if (totalEl) totalEl.textContent = `(총 매출: ₩${total})`;
+  const ctx = document.getElementById('weekly-sales-bar')?.getContext('2d');
+  if (!ctx) return;
+
+  const formattedLabels = weekRange.map(d => {
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    const month = String(d.getMonth() + 1).padStart(2, '0'); // 1~12
+    const date = String(d.getDate()).padStart(2, '0');       // 01~31
+    const day = days[d.getDay()];
+    return `${month}-${date} (${day})`; // ✅ 예: "06-10 (화)"
+  });
+
+  if (weeklyChartRefs.sales) {
+    weeklyChartRefs.sales.data.labels = formattedLabels;
+    weeklyChartRefs.sales.data.datasets[0].data = sales;
+    weeklyChartRefs.sales.update();
+  } else {
+    weeklyChartRefs.sales = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: formattedLabels,
+        datasets: [{ label: '매출 (₩)', data: sales, backgroundColor: '#00FF88', barPercentage: 0.4, categoryPercentage: 0.7 }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        layout: {
+          padding: {
+            top: 20,
+            bottom: 10,
+            left: 30
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          datalabels : {
+          anchor: 'end',
+          align: 'top',
+          formatter: v => v.toLocaleString(),
+          color: '#fff',
+          font: { size: 16 ,weight: 'bold' }
+        },
+          tooltip: {
+            callbacks: {
+              label: ctx => `₩${ctx.parsed.y.toLocaleString()}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: '#333' },
+            ticks: {
+              color: '#ccc',
+              font: { size: 18, weight: 'bold' },
+              callback: val => '₩' + Number(val).toLocaleString()
+            }
+          },
+          x: { grid: { color: '#333' }, ticks: { color: '#ccc', font: {size:18, weight: 'bold'} } }
+        }
+      },
+      plugins: [ ChartDataLabels ]
+    });
+  }
+}
+
+function renderWeeklyBarChart(type, selectedDate) {
+  if (!weeklyData) return;
+
+  const weekRange = getWeeklyDateRange(selectedDate);
+  const labels = weeklyData.labels_all;
+  const values = (type === 'production') ? weeklyData.values_all :
+                 (type === 'loss') ? weeklyData.loss_values_all :
+                 weeklyData.defect_values_all;
+
+  const daysKor = ['일', '월', '화', '수', '목', '금', '토'];
+
+  // ✅ isoDate와 출력용 label 쌍으로 구성
+  const labelObjects = weekRange.map(d => {
+    const isoDate = d.toISOString().split('T')[0];
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const date = String(d.getDate()).padStart(2, '0');
+    const day = daysKor[d.getDay()];
+    const label = `${month}-${date} (${day})`;
+    return { isoDate, label };
+  });
+
+  // ✅ 데이터 누적용 map 초기화
+  const dailySumMap = {};
+  labelObjects.forEach(obj => dailySumMap[obj.isoDate] = 0);
+
+  labels.forEach((label, i) => {
+    const dateStr = label.split(' ')[0];
+    if (dailySumMap[dateStr] !== undefined) {
+      dailySumMap[dateStr] += values[i] || 0;
+    }
+  });
+
+  // ✅ 라벨과 대응되는 데이터 배열 추출
+  const finalLabels = labelObjects.map(obj => obj.label);
+  const dataPoints = labelObjects.map(obj => +(dailySumMap[obj.isoDate] || 0).toFixed(2));
+
+  const sum = dataPoints.reduce((a, b) => a + b, 0).toFixed(2);
+  const unit = (type === 'defect') ? '건' : 'g';
+  document.getElementById('percentage-display').textContent = `총합: ${sum} ${unit}`;
+
+  const ctx = document.getElementById('weekly-chart')?.getContext('2d');
+  if (!ctx) return;
+
+  if (weeklyChartRefs.bar) {
+    weeklyChartRefs.bar.data.labels = finalLabels;
+    weeklyChartRefs.bar.data.datasets[0].data = dataPoints;
+    weeklyChartRefs.bar.update();
+  } else {
+    weeklyChartRefs.bar = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: finalLabels,
+        datasets: [{ label: type, data: dataPoints, backgroundColor: '#00ffcc' }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,  // ✅ 이 줄이 있어야 함!!
+
+        plugins: { legend: { display: false },        datalabels : {
+          anchor: 'end',
+          align: 'top',
+          formatter: v => v.toLocaleString(),
+          color: '#fff',
+          font: { weight: 'bold', size: 16 }
+        } },
+
+        scales: {
+          y: {
+            grid: { color: '#333' },
+            beginAtZero: true,
+            ticks: {
+              color: '#ccc',
+              font: {size:18, weight: 'bold'},
+              callback: val => (type === 'defect' ? val : val + 'g')
+            }
+          },
+          x: { grid: { color: '#333' }, ticks: { color: '#ccc', font: {size: 18, weight: 'bold'} } }
+        }
+      },
+    plugins: [ChartDataLabels]
+    });
+  }
+}
+
+
+// ✅ 탭 클릭 시 막대 차트 변경
+function setupWeeklyChartTabs() {
+  document.querySelectorAll('.chart-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const type = tab.dataset.type;
+      const selectedDate = document.getElementById('popup-date-picker').value;
+      renderWeeklyBarChart(type, selectedDate);
+    });
+  });
+}
+
+// 주간 센서 이상 찾기 함수 
+
+function renderWeeklySensorStatusCounts(data, weekDates) {
+  // 센서별 필드명 매핑: 표시할 센서 이름과 data 객체 속성 키
+  const sensorKeys = {
+    '사출 온도': 'n_temp_pv_all_is_outlier',
+    '챔버 온도': 'c_temp_pv_all_is_outlier',
+    'RPM': 'k_rpm_pv_all_is_outlier',
+    '스크류 속도': 'E_scr_pv_all_is_outlier',  // 정확한 키명 확인
+    '스크류 온도': 's_temp_pv_all_is_outlier'
+  };
+
+  // 결과 카운트 객체 초기화
+  const countsBySensor = {};
+  for (const name in sensorKeys) {
+    countsBySensor[name] = 0;
+  }
+
+  const labels = Array.isArray(data.labels_all) ? data.labels_all : [];
+
+  // 전체 레코드 순회하며, weekDates에 속하는 날짜인지 확인 후 플래그 카운트
+  for (let i = 0; i < labels.length; i++) {
+    // labels_all 요소 형식: "YYYY-MM-DD HH:MM:SS"
+    const dateStr = labels[i].split(' ')[0];  // "YYYY-MM-DD"
+    if (!weekDates.includes(dateStr)) continue;
+    // 주간 기간에 속할 때
+    for (const [sensorName, key] of Object.entries(sensorKeys)) {
+      const series = data[key];
+      // 방어 코드: series가 배열이 아니거나 인덱스 초과 시 스킵
+      if (!Array.isArray(series) || i >= series.length) continue;
+      const flag = series[i];
+      // flag가 1이면 이상치인 경우 (필요 시 0일 때 이상치인 로직으로 수정)
+      if (flag === 1) {
+        countsBySensor[sensorName]++;
+      }
+    }
+  }
+
+  // 테이블에 렌더링
+  const table = document.getElementById('sensor-status-table-week');
+  if (!table) return;
+  table.innerHTML = '';
+
+  // 헤더 행 추가 (선택 사항)
+  const thead = document.createElement('thead');
+  thead.innerHTML = `<tr><th style="text-align: left; padding: 5px 16px; font-size: 18px; color: #ccc; border-bottom: 1px solid #333;">센서</th><th style="text-align: right; padding: 5px 16px; font-size: 18px; color: #ccc; border-bottom: 1px solid #333;">이상치 횟수</th></tr>`;
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  for (const [name, cnt] of Object.entries(countsBySensor)) {
+    const row = document.createElement('tr');
+    // 횟수가 0이면 녹색, 1회 이상이면 붉은색 강조
+    const color = cnt > 0 ? '#FF5555' : '#00FF88';
+    row.innerHTML = `<td style="text-align: left; padding: 10px 16px; font-size: 16px; font-weight: bold; color: #ccc; border-bottom: 1px solid #333;">${name}</td><td style="text-align: right; padding: 10px 16px; font-size: 16px; font-weight:bold; color:${color}; border-bottom: 1px solid #333;">${cnt}회</td>`;
+    tbody.appendChild(row);
+  }
+  table.appendChild(tbody);
+}
+
+// ✅ 초기 로딩 시 마스터 함수
+async function initializeWeeklyDashboard() {
+  const picker = document.getElementById('popup-date-picker');
+  const selectedDate = new Date().toISOString().split('T')[0];
+  if (picker) picker.value = selectedDate;
+
+  weeklyData = await fetchWeeklyData();
+  const weekDates = getWeeklyDateStrings(selectedDate);
+  const summary = summarizeWeek(weeklyData, weekDates);
+  
+  renderWeeklySensorStatus(weeklyData, weekDates);
+  renderWeeklyProductionText(summary);
+  renderWeeklyLossText(summary);
+  updateWeeklyPieCharts(summary);
+  renderWeeklySalesChart(selectedDate);
+  renderWeeklyInterventionChart(weeklyData, weekDates);
+  renderWeeklyBarChart('production', selectedDate);
+  renderWeeklySensorStatusCounts(weeklyData, weekDates);
+
+  
+  document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+  const defaultTab = document.querySelector('.chart-tab[data-type="production"]');
+  if (defaultTab) defaultTab.classList.add('active');
+
+  setupWeeklyChartTabs();
+}
+
+window.addEventListener('DOMContentLoaded', initializeWeeklyDashboard);
+</script>
+
+<!-- 월 탭 -->
+<script>
+// ✅ 전역 변수 정의
+let monthlyData = null;
+let monthlyChartRefs = {}; // Chart.js 인스턴스 저장 (bar + pie)
+
+// ✅ 달의 모든 주차 구함
+function getWeeksInMonth(baseDateStr) {
+  const date = new Date(baseDateStr);
+  const year = date.getFullYear();
+  const month = date.getMonth();
+
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+
+  const weeks = [];
+  let currentWeek = [];
+
+  for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+    const day = d.getDay();
+    const iso = d.toISOString().split('T')[0];
+    currentWeek.push(iso);
+    
+    if (d.getDay() === 0 || d.getTime() === lastDay.getTime()) {
+      weeks.push(currentWeek);
+      currentWeek = [];
+    }
+  }
+  return weeks;
+}
+
+// ✅ 주차 요약 데이터 생성
+function summarizeWeeks(data, weekGroups) {
+  const { labels_all, values_all, loss_values_all, defect_values_all } = data;
+  return weekGroups.map(week => {
+    let prod = 0, loss = 0, defect = 0;
+    labels_all.forEach((label, i) => {
+      const date = label.split(' ')[0];
+      if (week.includes(date)) {
+        prod += values_all[i] || 0;
+        loss += loss_values_all[i] || 0;
+        defect += defect_values_all[i] || 0;
+      }
+    });
+    return { prod, loss, defect };
+  });
+}
+
+// ✅ 월간 생산 텍스트 표시
+function renderMonthlyProductionText(total) {
+  const elem = document.getElementById('realtime-month_sum');
+  if (elem) elem.textContent = `${total.prod.toFixed(2)} g`;
+}
+
+// ✅ 월간 손실 텍스트 표시
+function renderMonthlyLossText(total) {
+  const elem = document.getElementById('loss-month_cumulative');
+  if (elem) elem.textContent = `${total.loss.toFixed(2)} g`;
+}
+
+// ✅ 파이차트 생성/업데이트
+function createOrUpdatePieChart(id, chartRef, labels, data, colors) {
+  const canvas = document.getElementById(id);
+  if (!canvas || !canvas.getContext) {
+    console.warn(`⚠️ Canvas with id=${id} not found.`);
+    return;
+  }
+  const ctx = canvas.getContext('2d');
+
+  const centerTextPlugin = {
+    id: 'centerText',
+    beforeDraw(chart) {
+      const { ctx, width, height, data } = chart;
+      const values = data.datasets[0].data.map(v => Number(v) || 0);
+      const sum = values.reduce((a, b) => a + b, 0) || 1;
+      const pct = ((values[0] / sum) * 100).toFixed(1) + '%';
+
+      ctx.save();
+      ctx.font = 'bold 40px sans-serif';
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(pct, width / 2, height / 2);
+      ctx.restore();
+    }
+  };
+
+  if (chartRef[id]) {
+    chartRef[id].data.labels = labels;
+    chartRef[id].data.datasets[0].data = data;
+    chartRef[id].data.datasets[0].backgroundColor = colors;
+    chartRef[id].update();
+  } else {
+    chartRef[id] = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: colors
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        cutout: '75%',
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              color: '#fff',
+              font: { size: 20, weight: 'bold' }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                let label = context.label || '';
+                let value = context.raw || 0;
+                return `${label}: ${value}`;
+              }
+            }
+          }
+        }
+      },
+      plugins: [centerTextPlugin]
+    });
+  }
+}
+
+// ✅ 월간 파이차트 갱신
+function updateMonthlyPieCharts(summaries) {
+  const totalProd = summaries.reduce((sum, w) => sum + w.prod, 0);
+  const totalLoss = summaries.reduce((sum, w) => sum + w.loss, 0);
+  const totalDefect = summaries.reduce((sum, w) => sum + w.defect, 0);
+  const totalCount = summaries.length;
+
+  const goal = 10000;
+  createOrUpdatePieChart('month_prodPieChart', monthlyChartRefs, ['생산', '미달'], [totalProd, Math.max(0, goal - totalProd)], ['#00BFFF', '#333']);
+  createOrUpdatePieChart('month_lossPieChart', monthlyChartRefs, ['손실', '정상'], [totalLoss, Math.max(0, totalProd - totalLoss)], ['#FFE26B', '#333']);
+  createOrUpdatePieChart('month_defectPieChart', monthlyChartRefs, ['불량', '정상'], [totalDefect, totalCount - totalDefect], ['#FF5555', '#333']);
+}
+
+// 월간 막대 차트
+function renderMonthlyBarChart(type, baseDateStr) {
+  if (!monthlyData) return;
+  const weeks = getWeeksInMonth(baseDateStr);
+  const summaries = summarizeWeeks(monthlyData, weeks);
+
+  // 총합 계산 추가
+  const total = summaries.reduce((acc, cur) => {
+    acc.prod += cur.prod;
+    acc.loss += cur.loss;
+    return acc;
+  }, { prod: 0, loss: 0 });
+
+  renderMonthlyProductionText(total);
+  renderMonthlyLossText(total);
+
+  const data = summaries.map(s =>
+    type === 'month_production' ? s.prod :
+    type === 'month_loss' ? s.loss :
+    s.defect
+  );
+
+  const sum = data.reduce((a, b) => a + b, 0).toFixed(2);
+  const unit = type === 'month_defect' ? '건' : 'g';
+  // 🐳 id 중복으로 percentage-display => montly-percentage-display 수정
+  document.getElementById('monthly-percentage-display').textContent = `총합: ${sum} ${unit}`;
+
+  const ctx = document.getElementById('monthly-chart')?.getContext('2d');
+  if (!ctx) return;
+
+  const labels = weeks.map((_, i) => `${i + 1}주차`);
+
+  if (monthlyChartRefs.bar) {
+    monthlyChartRefs.bar.data.labels = labels;
+    monthlyChartRefs.bar.data.datasets[0].data = data;
+    monthlyChartRefs.bar.update();
+  } else {
+    monthlyChartRefs.bar = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{ label: '월간 통계', data, backgroundColor: '#00cc88' }]
+      },
+      options: {
+        layout: {
+          padding: {
+            top:    0,
+            bottom: 0,
+            left:   15,
+            right:  0
+          }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false },
+        datalabels: {anchor: 'end', align:  'top', formatter: v => v.toLocaleString(), color: '#fff', font: { weight: 'bold', size: 16 }}
+      
+      
+      
+        },
+        scales: {
+          y: {
+            grid: { color: '#333' },
+            beginAtZero: true,
+            ticks: {
+              color: '#ccc',
+              font: {size:18, weight: 'bold'},
+              callback: val => (type === 'month_defect' ? val : val + 'g')
+            }
+          },
+          x: { grid: { color: '#333' }, ticks: { color: '#ccc', font: {size:18, weight: 'bold'} } }
+        }
+      },
+      plugins: [ ChartDataLabels ]
+    });
+  }
+
+  // 파이차트도 갱신
+  updateMonthlyPieCharts(summaries);
+  renderMonthlySalesChart(baseDateStr);
+  renderMonthlySensorStatus(monthlyData, baseDateStr);
+}
+
+
+function renderMonthlySensorStatus(data, baseDateStr) {
+  const keys = {
+    '사출 온도': 'n_temp_pv_all_is_outlier',
+    '챔버 온도': 'c_temp_pv_all_is_outlier',
+    'RPM': 'k_rpm_pv_all_is_outlier',
+    '스크류 속도': 'E_scr_pv_all_is_outlier',
+    '스크류 온도': 's_temp_pv_all_is_outlier'
+  };
+
+  // 기준 날짜로 해당 월의 모든 날짜 구하기
+  const baseDate = new Date(baseDateStr);
+  const year = baseDate.getFullYear();
+  const month = baseDate.getMonth();
+  const start = new Date(year, month, 1);
+  const end = new Date(year, month + 1, 0);
+
+  const monthDates = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    monthDates.push(d.toISOString().split('T')[0]);
+  }
+
+  const counts = {};
+  Object.entries(keys).forEach(([label, key]) => {
+    const series = data[key];
+    let count = 0;
+    data.labels_all.forEach((time, i) => {
+      const dateStr = time.split(' ')[0];
+      if (monthDates.includes(dateStr) && series[i] === 1) {
+        count++;
+      }
+    });
+    counts[label] = count;
+  });
+
+  const table = document.getElementById('sensor-status-table-month');
+  if (!table) return;
+  table.innerHTML = '';
+  Object.entries(counts).forEach(([name, cnt]) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td style="text-align: left; padding: 10px 16px; font-size: 16px; font-weight: bold; color: #ccc; border-bottom: 1px solid #333;">${name}</td><td style="text-align: right; padding: 10px 16px; font-size: 16px; font-weight:bold; color:${cnt > 0 ? '#FF5555' : '#00FF88'}; border-bottom: 1px solid #333;">${cnt} 회</td>`;
+    table.appendChild(row);
+  });
+}
+
+function renderMonthlyInterventionChart(baseDateStr) {
+  if (!monthlyData || !monthlyData.scale_pv_all || !monthlyData.labels_all) return;
+
+  const weekGroups = getWeeksInMonth(baseDateStr);
+  const labels = monthlyData.labels_all;
+  const values = monthlyData.scale_pv_all;
+
+  const countsPerWeek = weekGroups.map(week => {
+    const weekSeries = [];
+
+    labels.forEach((label, i) => {
+      const dateStr = label.split(' ')[0];
+      if (week.includes(dateStr)) {
+        weekSeries.push(values[i]);
+      }
+    });
+
+    let count = 0;
+    let streak = 0;
+
+    for (let i = 0; i < weekSeries.length; i++) {
+      const v = weekSeries[i];
+      if (v < 2.9 || v > 3.3) {
+        streak++;
+        if (streak === 20) {
+          count++;
+          streak = 0;
+        }
+      } else {
+        streak = 0;
+      }
+    }
+
+    return count;
+  });
+
+  const ctx = document.getElementById('monthly_intervention-bar')?.getContext('2d');
+  if (!ctx) return;
+
+  const labelsKor = weekGroups.map((_, i) => `${i + 1}주차`);
+
+  if (monthlyChartRefs.intervention) {
+    monthlyChartRefs.intervention.data.labels = labelsKor;
+    monthlyChartRefs.intervention.data.datasets[0].data = countsPerWeek;
+    monthlyChartRefs.intervention.update();
+  } else {
+    monthlyChartRefs.intervention = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labelsKor,
+        datasets: [{
+          label: '개입 건수',
+          data: countsPerWeek,
+          backgroundColor: '#ff6688'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: {
+            top: 20,  // ✅ 숫자 늘려서 여백 확보
+          
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+          anchor: 'end',            
+          align:  'end',             
+          formatter: v => v.toLocaleString(), // 천단위 콤마
+          color:     '#fff',         // 흰색 폰트
+          font:      { size: 16, weight: 'bold' }
+        },
+
+        tooltip: {
+          callbacks: {
+            label: ctx => `${ctx.parsed.y} 회`
+            }
+          }
+        },
+        scales: {
+          y: {
+            grid: { color: '#333' },
+            beginAtZero: true,
+            ticks: {
+              color: '#ccc',
+              font: {size: 18,
+              weight: 'bold'}, 
+              callback: val => `${val} 회`
+            }
+          },
+          x: { grid: { color: '#333' }, ticks: { color: '#ccc', font: {size: 18, weight: 'bold'} } }
+        }
+      },
+      plugins: [ ChartDataLabels ]
+    });
+  }
+}
+
+
+function renderMonthlySalesChart(baseDateStr) {
+  if (!monthlyData) return;
+
+  const weekGroups = getWeeksInMonth(baseDateStr); // 주차별 날짜 배열
+  const labels = monthlyData.labels_all;
+  const values = monthlyData.values_all;
+
+  const salesPerWeek = weekGroups.map(weekDates => {
+    let totalGram = 0;
+    labels.forEach((label, i) => {
+      const date = label.split(' ')[0];
+      if (weekDates.includes(date)) {
+        totalGram += values[i] || 0;
+      }
+    });
+    return +(totalGram * 5).toFixed(2); // 단가 ₩5
+  });
+
+  const totalSales = salesPerWeek.reduce((a, b) => a + b, 0).toLocaleString();
+  const ctx = document.getElementById('monthly-sales-bar')?.getContext('2d');
+  if (!ctx) return;
+
+  const labelsKor = weekGroups.map((_, i) => `${i + 1}주차`);
+  const display = document.getElementById('monthly-sales-total');
+  if (display) display.textContent = `(총 매출: ₩${totalSales})`;
+
+if (monthlyChartRefs.sales) {
+  monthlyChartRefs.sales.data.labels = labelsKor;
+  monthlyChartRefs.sales.data.datasets[0].data = salesPerWeek;
+  monthlyChartRefs.sales.update();
+} else {
+  monthlyChartRefs.sales = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labelsKor,
+      datasets: [{ label: '주차별 매출 (₩)', data: salesPerWeek, backgroundColor: '#00FF88', barPercentage: 0.4, categoryPercentage: 0.7 }]
+    },
+      options: {
+        layout: {
+          padding: { top: 10, bottom: 0, left: 30, right: 10 }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+            anchor: 'end',        
+            align:  'top',             
+            formatter: v => v.toLocaleString(), 
+            color:     '#fff',         
+            font:      { weight: 'bold', size: 16 }},
+          tooltip: {
+            callbacks: {
+              label: ctx => `₩${ctx.parsed.y.toLocaleString()}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            grid: { color: '#333'},
+            beginAtZero: true,
+            ticks: {
+              color: '#ccc',
+              font: { size: 18, weight: 'bold'},
+              callback: val => '₩' + Number(val).toLocaleString()
+            }
+          },
+          x: { grid: { color: '#333'}, ticks: { color: '#ccc', font: {size:18, weight: 'bold'} } }
+        }
+      },
+      plugins: [ ChartDataLabels ]
+    });
+  }
+}
+
+// 탭 클릭 이벤트 연결
+function setupMonthlyChartTabs() {
+  document.querySelectorAll('.month_chart-tab-btn').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.month_chart-tab-btn').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const type = tab.dataset.type;
+      const selectedDate = document.getElementById('popup-date-picker').value;
+      renderMonthlyBarChart(type, selectedDate);
+    });
+  });
+}
+
+// ✅ 초기 실행 함수
+async function initializeMonthlyDashboard() {
+  const picker = document.getElementById('popup-date-picker');
+  const selectedDate = new Date().toISOString().split('T')[0];
+  if (picker) picker.value = selectedDate;
+
+  const res = await fetch('/api/production_all');
+  monthlyData = await res.json();
+
+  renderMonthlyBarChart('month_production', selectedDate);
+  setupMonthlyChartTabs();
+  renderMonthlyInterventionChart(selectedDate);
+
+  // 기본 탭 활성화
+  document.querySelectorAll('.month_chart-tab-btn').forEach(t => t.classList.remove('active'));
+  const defaultTab = document.querySelector('.month_chart-tab-btn[data-type="month_production"]');
+  if (defaultTab) defaultTab.classList.add('active');
+}
+
+window.addEventListener('DOMContentLoaded', initializeMonthlyDashboard);
+</script>
+{% endblock %}

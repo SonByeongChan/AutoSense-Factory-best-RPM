@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    
+    <title>작업자 로그인</title>
+
+<!-- ----------------------------------------------------- -->
+<!--             CSS 영역 ( style 태그 안에 )                -->
+<!-- ----------------------------------------------------- -->
+    <style>
+      /* [공통 배경 및 폰트 설정] */
+      body {
+        background-color: #050525; /* 아주 짙은 회색 배경 */
+        color: #fff;             /* 기본 글씨색은 흰색 */
+        font-family: 'Noto Sans KR', sans-serif; /* 한국어에 적합한 폰트 */
+        margin: 0;
+        padding: 0;
+      }
+
+      /* [Back to dashboard 버튼] - main화면으로 돌아감 */
+
+
+      .back-button {
+        position: absolute;  /* login-box 기준으로 위치를 고정 */
+        top: -30px;           /* 박스 위로 올라오게! */
+        left: 0;              /* 왼쪽에 붙이기 */
+        color: #8C8C8C;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 14px;
+        transition: color 0.2s;
+      }
+
+      .back-button:hover {
+        color: #42a5f5;
+      }
+
+
+      /* [화면 중앙 정렬 컨테이너] */
+      .login-container {
+        display: flex;                /* flex 레이아웃을 사용 */
+        justify-content: center;     /* 가로 중앙 정렬 */
+        align-items: center;         /* 세로 중앙 정렬 */
+        height: 100vh;               /* 화면 전체 높이 */
+      }
+
+      /* [로그인 박스 스타일] */
+      .login-box {
+        position: relative;             /* 이 안에서 버튼을 절대 위치로 배치하기 위해 기준 설정 */
+        background-color: #000000dc;   /* 약간 밝은 다크 그레이 박스 */
+        border: 1px solid #333333;
+        box-shadow: 0 0 7px #00bfff;            /* glow 효과 */
+        padding: 40px;               /* 안쪽 여백 */
+        border-radius: 10px;         /* 테두리 둥글게 */
+        width: 100%;                 /* 반응형 폭 조절 */
+        max-width: 400px;            /* 최대 너비 제한 */
+      }
+
+      /* [제목 스타일] */
+      .login-box h2 {
+        text-align: center;          /* 가운데 정렬 */
+        margin-bottom: 30px;         /* 아래쪽 여백 */
+        font-size: 24px;             /* 글자 크기 */
+      }
+
+      /* [라벨 텍스트] */
+      .login-box label {
+        display: block;              /* 줄 바꿈 */
+        margin-bottom: 8px;          /* 입력창과의 간격 */
+        font-size: 14px;
+      }
+
+      /* [입력 필드 공통 스타일] */
+      .login-box input[type="text"],
+      .login-box input[type="password"] {
+        width: 94%;                 /* 입력창 너비 */
+        padding: 12px;               /* 안쪽 여백 */
+        border: none;                /* 기본 테두리 제거 */
+        border-radius: 6px;          /* 둥근 모서리 */
+        background-color: #2a2a2a;   /* 진회색 배경 */
+        color: white;                /* 글자색 흰색 */
+        margin-bottom: 20px;         /* 아래 여백 */
+        font-size: 16px;
+      }
+
+      /* [로그인 버튼] */
+      .login-box button {
+        width: 100%;                 /* 버튼 가로 100% */
+        padding: 12px;               /* 버튼 내부 여백 */
+        background-color: #00bfff;   /* 하늘색 배경 */
+        color: white;                /* 흰색 글자 */
+        font-size: 16px;             
+        font-weight: bold;           /* 굵은 글씨 */
+        border: none;                /* 테두리 없음 */
+        border-radius: 6px;          /* 둥근 버튼 */
+        cursor: pointer;             /* 마우스 커서 변경 */
+        transition: background-color 0.3s ease; /* 색상 전환 효과 */
+      }
+
+      /* [버튼 호버 효과] */
+      .login-box button:hover {
+        background-color: #009acd;   /* 조금 더 진한 파란색으로 바뀜 */
+      }
+
+      .flash-message.error {
+        color: #e53935;             /*진한 빨간색*/
+        font-size: 14px;
+        margin-top: 8px;
+        margin-bottom: 20px;
+        text-align: left; /* 입력창과 정렬 맞추기 */
+        padding-left: 5px;
+      }
+    </style>
+
+</head>
+<body>
+
+
+<!-- ----------------------------------------------------- -->
+<!--                      Html 영역                         -->
+<!-- ----------------------------------------------------- -->
+    <!-- 시작 부분 -->
+    <div class="login-container">  {# 화면을 가운데 정렬하기 위한 컨테이너 #}
+
+  
+  
+      <div class="login-box">       {# 로그인 박스 스타일을 적용할 div #}
+        <!-- 뒤로가기 버튼 -->
+        <a href="{{ url_for('main') }}" class="back-button">← Back to dashboard</a>
+        <h2>Sign In</h2>            {# 로그인 제목 #}
+        
+        
+        <!-- 로그인 입력 폼 시작 -->
+        <form method="post" class="login-form">       {# 서버로 데이터를 보낼 방식은 POST (URL에 정보 노출되지 않음) #}
+          <label for="pw">사원 번호*</label>  {# 입력창 위에 뜨는 텍스트 라벨 #}
+          
+          <!-- 사원번호 입력 필드 -->
+          <input type="password" name="pw" placeholder="202505201234" required>
+
+          <!-- ✅ 입력창 바로 아래 flash 메시지 표시 -->
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for category, message in messages %}
+                <p class="flash-message {{ category }}">{{ message }}</p>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+
+          {# input 타입은 비밀번호(password)로 설정했지만 실제로는 사원번호 입력용 #}
+          {# required: 값이 비어있으면 제출되지 않음 #}
+
+          <!-- 로그인 버튼 -->
+          <button type="submit">Sign In</button>
+        </form>
+      </div>
+    </div>
+
+    
+<!-- ----------------------------------------------------- -->
+<!--              Js 영역 ( script 태그 안에 )               -->
+<!-- ----------------------------------------------------- -->
+
+</body>
+</html>

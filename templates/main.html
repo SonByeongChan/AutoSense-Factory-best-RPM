@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    
+    <title>main</title>
+
+<!-- ----------------------------------------------------- -->
+<!--             CSS 영역 ( style 태그 안에 )                -->
+<!-- ----------------------------------------------------- -->
+    <style>
+    body {
+    background-color: #050525;
+    margin: 0;
+    padding: 0;
+    height: 80vh;  /* 화면 전체 높이 */
+    display: flex;
+    justify-content: center;  /* 가로 중앙 정렬 */
+    align-items: center;      /* 세로 중앙 정렬 */
+
+}
+
+.login-container {
+    text-align: center;
+    margin-top: 100px;
+}
+
+.login-container h2 {
+    font-size: 24px;
+    margin-bottom: 40px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+}
+
+.login-icon {
+    width: 200px;      /* 이미지 너비 */
+    height: 200px;     /* 이미지 높이 */
+    object-fit: contain;  /* 비율 유지하면서 맞추기 */
+    margin-bottom: 2px;    /* 아이콘과 텍스트 간격 */
+    transform: translateX(30px);    /* 약간 왼쪽으로 이동 */
+}
+
+.login-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;    /* 아이콘 + 텍스트 모두 수직 정중앙 정렬 */
+    background-color: #000000dc; 
+    padding: 30px;
+    border-radius: 20px;
+    text-decoration: none;
+    color: white;
+    transition: background-color 0.3s;
+    width: 300px;
+    height: 300px;
+    text-align: center;
+    border: 1px solid #333333;
+    box-shadow: 0 0 7px #00bfff;            /* glow 효과 */
+}
+
+.login-button:hover {
+    background-color: #333;
+}
+
+.login-button img {
+    width: 250px;
+    height: 250px;
+    margin-bottom: 0px;
+}
+
+.login-button span {
+    font-size: 50px;
+    font-weight: bold;
+    display: block;
+    text-align: center;
+    margin-top: -35px; /* 아이콘과의 간격 조절 */
+    letter-spacing: 0px;       /* 글자 간격 조정 */
+}
+
+
+</style>
+
+</head>
+<body>
+
+
+<!-- ----------------------------------------------------- -->
+<!--                      Html 영역                         -->
+<!-- ----------------------------------------------------- -->
+    <div class="login-container">
+    <div class="button-container">
+
+        <a href="{{ url_for('login_worker') }}" class="login-button">
+            <img src="{{ url_for('static', filename='images/worker_icon.png') }}" class="login-icon" alt="작업자" />
+            <span>작업자</span>
+        </a>
+        <a href="{{ url_for('login_admin') }}" class="login-button">
+            <img src="{{ url_for('static', filename='images/admin_icon.png') }}" class="login-icon" alt="관리자" />
+            <span>관리자</span>
+        </a>
+    </div>
+</div>
+
+<!-- ----------------------------------------------------- -->
+<!--              Js 영역 ( script 태그 안에 )               -->
+<!-- ----------------------------------------------------- -->
+    <script></script>
+
+</body>
+</html>

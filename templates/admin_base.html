@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>관리자 페이지</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #050525; /*#111*/
+      color: #fff;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ✅ 반응형 사이드바 */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 115px;
+      background-color:  #1a7dff10;  /*#062651;#1a7dff #0a1a33;*/
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding-top: 60px;
+      transition: width 0.3s;
+      z-index: 999;
+      overflow: hidden;
+    }
+
+    .sidebar:hover {
+      width: 208px;
+    }
+
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      padding: 12px 20px;
+      color: #fff;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .sidebar a:hover {
+      background-color: #00050c;
+    }
+
+    .sidebar i {
+      font-size: 20px;
+      min-width: 100px;
+      text-align: center;
+    }
+
+    /* ✅ 텍스트 숨기기 기본 */
+    .sidebar .label {
+      font-size: 20px;
+      opacity: 0;
+      width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      transition: opacity 0.3s ease, width 0.3s ease, margin-left 0.3s ease;
+    }
+
+    /* ✅ hover 시 텍스트 보이기 */
+    .sidebar:hover .label {
+      opacity: 1;
+      width: auto;
+      margin-left: 10px;
+    }
+
+    /* ✅ 상단 고정 바 */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 115px;          /* sidebar 기준으로 수정 */
+      width: calc(100% - 115px);     /* 남은 너비 정확히 계산 */
+      background-color: #050525;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 10px 10px 10px;
+      border-bottom: 1px solid #444;
+      z-index: 1000;
+      transition: left 0.3s, width 0.3s;
+    }
+/* 호버 시 width도 맞게 조정 */
+    .sidebar:hover ~ .top-bar {
+      left: 208px;
+      width: calc(100% - 208px);
+    }
+
+    .top-bar img.logo {
+      height: 40px;
+    }
+
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-right: 30px;
+    }
+
+    .profile .user {
+      font-weight: bold;
+      color: #ccc;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid #555;
+      transition: transform 0.3s;
+      cursor: pointer;
+    }
+
+    .avatar:hover {
+      transform: scale(2.5);
+      z-index: 2000;
+    }
+
+    .avatar-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2001;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 20px;
+      border-radius: 12px;
+    }
+
+    .avatar-modal img {
+      max-width: 300px;
+      border-radius: 10px;
+      border: 3px solid #010e12;
+    }
+
+    .avatar-modal.active {
+      display: block;
+    }
+
+    /* ✅ 콘텐츠 영역 */
+    /* 고정 */
+    .main-content {
+      flex-grow: 1;
+      padding: 80px 20px 20px 80px;
+      transition: padding-left 0.3s;
+      margin-left: 52px;
+      
+    }
+    /* 사이드바 호버 시 사이즈 조정 */
+    .sidebar:hover ~ .main-content {
+      padding-left: 175px;
+    }
+
+    .icon {
+    width: 80px;
+    height: 80px;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+  </style>
+</head>
+<body>
+
+  <!-- ✅ 반응형 사이드바 -->
+  <div class="sidebar">
+    <a href="{{ url_for('admin_dashboard') }}">
+    <img src="{{ url_for('static', filename='images/dashboard_img.png') }}" alt="대시보드 아이콘" class="icon">
+    <span class="label">대시보드</span>
+    </a>
+    
+    <a href="{{ url_for('admin_status') }}">
+    <img src="{{ url_for('static', filename='images/status_img.png') }}" alt="현황 아이콘" class="icon">
+    <span class="label">현황</span>
+    </a>
+    
+    <a href="{{ url_for('admin_system') }}">
+    <img src="{{ url_for('static', filename='images/system_img.png') }}" alt="시스템 아이콘" class="icon">
+    <span class="label">시스템</span>
+    </a>
+
+    <a href="{{ url_for('admin_ai_model') }}">
+    <img src="{{ url_for('static', filename='images/ai_model_img.png') }}" alt="AI 모델 아이콘" class="icon">
+    <span class="label">AI 모델</span>
+    </a>
+
+    <a href="{{ url_for('main') }}">
+    <img src="{{ url_for('static', filename='images/out_img.png') }}" alt="로그아웃 아이콘" class="icon">
+    <span class="label">로그아웃</span>
+    </a>
+  </div>
+
+  <!-- ✅ 상단 고정 바 -->
+  <div class="top-bar">
+    <img src="{{ url_for('static', filename='images/computer_mate.png') }}" alt="로고" class="logo">
+    <div class="profile">
+      <span class="user">ONE_PIECE 관리자님</span>
+      <img src="{{ url_for('static', filename='images/pro.png') }}" alt="avatar" class="avatar" id="avatarIcon">
+    </div>
+  </div>
+
+  <!-- ✅ 아바타 클릭 시 모달 -->
+  <div class="avatar-modal" id="avatarModal">
+    <img src="{{ url_for('static', filename='images/pro.png') }}" alt="프로필 확대">
+  </div>
+
+  <!-- ✅ 콘텐츠 영역 -->
+  <div class="main-content">
+    {% block content %}{% endblock %}
+  </div>
+
+  <!-- ✅ JS: 아바타 클릭 시 확대 모달 -->
+  <script>
+    const avatar = document.getElementById('avatarIcon');
+    const modal = document.getElementById('avatarModal');
+
+    avatar.addEventListener('click', () => {
+      modal.classList.add('active');
+    });
+
+    modal.addEventListener('click', () => {
+      modal.classList.remove('active');
+    });
+  </script>
+
+</body>
+</html>

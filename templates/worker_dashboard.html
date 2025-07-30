@@ -1,0 +1,1607 @@
+<!DOCTYPE html> <!-- html 문서임을 선언 -->
+<html lang="ko">  <!-- 한국어 페이지임을 명시 -->
+<head>
+    <meta charset="UTF-8">  <!-- 한글 인코딩 깨짐 방지 -->
+    <title>작업자 대시보드</title>  <!-- 브라우저 탭 제목 -->
+
+    <!-- ✅ 1. Chart.js 먼저 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- ✅ 2. annotation 플러그인 다음에 -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+
+    <!-- ✅ 3. Chart에 플러그인 등록은 무조건 이 뒤에서 실행 -->
+    <script>
+      Chart.register(window['chartjs-plugin-annotation']);
+    </script>
+
+<!-- 
+    <script>
+      // ✅ 플러그인 등록
+      Chart.register(Chart.GaugeController, Chart.ArcElement, Chart.Legend, Chart.Title);
+    </script> -->
+
+<!-- ----------------------------------------------------- -->
+<!--             CSS 영역 ( style 태그 안에 )                -->
+<!-- ----------------------------------------------------- -->
+    <style>
+      /* 전체 페이지 배경 및 폰트 설정 */
+      body {
+        background-color: #050525;   /*#1106a5dd   #050525dc*/
+        margin: 0;
+        font-family: 'Pretendard', sans-serif;
+        overflow-x: hidden;
+        overflow-y: hidden; /* 세로 스크롤만 차단 */
+      }
+
+      /* 상단 상태바 (고정) */
+      .status-header {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          z-index: 999;
+          background-color: #050525;
+          color: white;
+          /* padding: 10px 40px;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start; */
+          box-sizing: border-box;
+          /* border-bottom: 1px solid #333;      구분선 */
+        
+      }
+
+      .status-top-row, .status-bottom-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 40px;
+      }
+
+      .right-buttons {
+        display: flex;
+        gap: 10px;
+      }
+
+      .status-text {
+        font-size: 32px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .status-dot {
+        display: inline-block;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #00e676;  /* 기본: 초록색 */
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      /* ⛔ 자동 조정 실패 시: 빨간색 */
+      .status-dot.warning {
+        background-color: #ff0000;  /* 붉은 경고색 */
+      }
+
+
+      .time-line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 24;
+        font-weight: 700;
+      }
+
+      .tab-button-group{
+        display: flex;
+        gap: 10px;
+      }
+
+      .tab-btn {
+        padding: 10px 20px;
+        font-size: 20px;
+        border: none;
+        border-radius: 8px;
+        background-color: black;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        border: 1px solid #333333;
+        box-shadow: 0 0 7px #00bfff;            /* glow 효과 */
+      }
+      .tab-btn:hover {
+        color: #42a5f5;
+      }
+      .tab-btn.active:hover {
+        color: #42a5f5;
+      }
+      
+      .tab-btn.active {
+        background-color: white;
+        color: black;
+      }
+      
+      /* 왼쪽 버튼 */
+      .back-button {
+        /* position: fixed;
+        bottom: 20px;
+        left: 20px; */
+        font-size: 18px;
+        background: white;
+        color: black;
+        font-weight: bold;
+        padding: 8px 20px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        /* z-index: 1001; */
+        text-decoration: none;
+        border: 1px solid #333333;
+        box-shadow: 0 0 7px #00bfff;            /* glow 효과 */
+      }
+      .back-button:hover {
+        color: #42a5f5;
+      }
+
+      .tab-pane {
+        display: none;
+        padding: 20px;
+        padding-top: 40px;
+      }
+
+      .tab-pane.active {
+        display: block;
+      }
+
+      /* ========================================== */
+
+      .clock-icon {
+        font-size: 28px;
+        margin-right: 6px;
+      }
+
+      #currentDateTime {
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      .status-left {
+          display: flex;
+          flex-direction: column; /* 세로로 쌓이게 함 */
+          align-items: flex-start;    /* 왼쪽 정렬 유지 */
+          gap: 10px;
+      }
+
+      .status-line {
+        display: flex;
+        align-items: center; /* 🔹 텍스트가 불 옆에 붙도록 */
+        gap: 10px;
+      }
+
+
+
+      .status-right {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 10px;
+      }
+
+
+
+      .production-info {
+          font-size: 16px;
+          font-weight: bold;
+          color: white;
+          margin: 20px 30px;
+      }
+
+      /* ------------------------------------------------------
+      ✅ CSS: Grid 레이아웃 기본 설정
+      → 대시보드 카드들을 4열 × 4행 구조로 배치함
+      → 각 카드는 'card card-1a', 'card-2' 같은 클래스로 배치 위치 조정
+      ------------------------------------------------------ */
+      /* 🐳 */
+      .grid-container {
+        display: grid;                                /* Grid 레이아웃을 사용하겠다는 선언(기본 틀 만들기) */
+        grid-template-columns: 1fr;                   /* 하나의 열(column)로 수직 배치 */
+
+        grid-template-rows: auto auto;          /* auto: 콘텐츠 높이에 따라 행, 열 길이 자동으로 결정됨 */
+                    
+        gap: 15px;
+
+        margin: 105px auto 0;
+
+        width: 100%;
+
+        max-width: none;
+      }
+
+      /* ------------------------------------------------------
+      ✅ CSS: 카드 요소 공통 스타일
+      → 대시보드 안에 들어가는 모든 "정보 카드"에 공통 적용됨
+      → 예: 생산량, 로스, 이익률, 차트, 센서 현황 등
+      ------------------------------------------------------ */
+      .chart-card {
+        background: #000000dc;            /*background: #050525dc;*/
+        border-radius: 12px;
+        border: 1px solid #333333;
+        box-shadow: 0 0 7px #00bfff;            /* glow 효과 */
+        padding: 10px 20px 20px 20px;
+        height: 350px;    /* 높이 고정 */
+        width: 100%;
+        max-width: 1560px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+
+      }
+
+      /* 마우스 오버 시 부드러운 그림자 효과 */
+/* .chart-card:hover {
+    /* box-shadow: 0 0 10px rgba(45, 74, 74, 0.2); */
+/* } */ */
+
+/* 부드러운 외곽선 발광 효과 */
+.glow-subtle {
+    box-shadow: 0 0 5px rgba(45, 74, 74, 0.1);
+}
+
+      .grid-2col {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 2열로 나눔 */
+        gap: 20px;
+      }
+
+      /* 그래프 높이 */
+      .chart-canvas-wrapper {
+        height: 300px;               /* ✅ 그래프 높이 명확히 지정 */
+      }
+
+      .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 0;
+        padding: 0;
+      }
+
+      .chart-header-left {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+
+      .custom-legend {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 20px;
+        color: white;
+        margin: 0;
+        padding: 0;
+      }
+
+      .legend-box {
+        width: 18px;
+        height: 10px;
+        background-color: #00FFB2;  /* 중량 색상 */
+        border: 1px solid white;
+        display: inline-block;
+        margin-right: 2px;
+      }
+
+      .chart-title {
+        color: white;
+        font-size: 50px;
+        font-weight: bold;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+      }
+
+      .product-status {
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        margin: 0;
+        padding: 0;
+      }
+
+      canvas {
+        width: 100% !important;
+        height: 100% !important;  /* ✅ 그래프 비율을 자동으로 유지 */
+        background-color: transparent;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block;
+      }
+
+
+      /* ------------------------------------------------------
+      ✅ Grid 위치 지정: 각 카드 컴포넌트의 열/행 배치 설정
+      → 기준: .grid-container (4열 x 4행) 내에서 배치 위치를 지정
+      ------------------------------------------------------ */
+
+      /* 🔹 카드 1a: 현재 중량 */
+      .card-1a {
+        grid-column: 1 / 5;     /* 👉 1번 열부터 시작해서 2번 열 전까지 → 즉, 첫 번째 열 */
+        grid-row: 1;            /* 👉 첫 번째 행에 배치 */
+      }
+
+      /* 🔹 카드 1b: 현재 RPM */
+      .card-1b {
+        grid-column: 1 / 5;     /* 👉 두 번째 열 */
+        grid-row: 2;            /* 👉 첫 번째 행 */
+      }
+
+      .card-back {
+        grid-column: 2 / 3;
+        grid-row: 3;
+      }
+
+      /* ==================== 없는 부분 ============== */
+      .bottom-button-wrapper {
+        position: relative;
+        display: block;
+        width: 100%;
+        margin-top: 10px;
+        margin-bottom: 20px;
+      }
+
+      /* ✅ 팝업 테스트 버튼을 오른쪽 하단에 고정 */
+      .test-button-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 999; /* 팝업보다 아래에 있어야 하면 더 작은 수 */
+      }
+
+      .test-button-container button {
+        padding: 8px 12px;
+        font-size: 12px;
+        background: white;
+        color: black;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      /* =========================================== */
+      .popup-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          display: none;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+      }
+
+      .popup-box {
+          background: white;
+          color: black;
+          padding: 30px;
+          border-radius: 12px;
+          text-align: center;
+          width: 300px;
+      }
+
+      .popup-box h3 {
+          color: red;
+      }
+
+      .popup-box button {
+          background-color: black;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          margin-top: 15px;
+          border-radius: 8px;
+          cursor: pointer;
+      }
+
+
+
+      /* ====================== 없는 부분 ================ */
+      .button-row-wrapper {
+
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between; /* 왼쪽 + 중앙 정렬 */
+      align-items: center;
+      padding: 0px 40px 20px 40px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+
+    /* ============================================ */
+
+    /* 탭 버튼 스타일 (추가됨) */
+    .tab-buttons {
+      position: fixed;
+      top: 130px;
+      left: 0;
+      width: 100%;
+      z-index: 998;
+      display: flex;
+      gap: 10px;
+      padding: 20px 30px 24px 30px;
+      background-color: #242424;
+      box-sizing: border-box;
+      border-bottom: 1px solid #444;
+    }
+
+
+    /* ============================= */
+    /* .grid-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      padding: 50px 40px;
+      background-color: #121212;
+    } */
+    /* ======================================== */
+
+        .grid-container2 {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 0 30px;
+        margin: 105px auto 0;
+        /* margin-top: 0; */
+        width: 100;
+        max-width: none;
+        }
+
+
+     /* 아래처럼 전체를 하나의 grid-container로 유지하고,
+     하단 2행 2열은 내부에서 grid-row로 분기 --> */
+        .grid-2col {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr); /* 2열로 나눔 */
+        gap: 5px;
+        }
+
+        .chart-card2 {
+        background-color: #000000dc;
+        border: 1px solid #333333;
+        box-shadow: 0 0 7px #00bfff;            /* glow 효과 */
+        border-radius: 12px;
+        padding: 16px;
+        height: 350px;
+        }
+
+
+        .chart-header2 {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0px;
+        padding: 0;
+        }
+
+
+        .chart-title2 {
+        color: white;
+        font-size: 30px;
+        font-weight: bold;
+        margin: 0px 0px 5px 0px;
+        padding: 0;
+        }
+
+
+        #tab2 canvas {
+        width: 100% !important;
+        height: 294px !important;     /*293.174*/
+        background-color: transparent;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block;
+        }
+
+
+        /* ===========탭3============= */
+        /* ✅ 테이블 컨테이너 */
+        .log-table-container {
+        background-color: #161717;
+        padding: 20px;
+        border-radius: 12px;
+        /* margin-top: 20px; */
+        margin: 105px auto 0;
+        overflow-x: auto;
+        max-height: 60vh;
+        }
+
+
+        /* ✅ 테이블 스타일 */
+        .log-table {
+        width: 100%;
+        border-collapse: collapse;
+        color: white;
+        font-size: 14px;
+        }
+        
+
+
+        .log-table th,
+        .log-table td {
+        border: 1px solid #333;
+        padding: 10px;
+        text-align: center;
+        white-space: nowrap;
+        }
+
+
+        .log-table thead {
+        background-color: #1f1f1f;
+        font-weight: bold;
+        }
+
+
+        .log-table tbody tr:nth-child(odd) {
+        background-color: #222;
+        }
+
+
+      .button-row-wrapper {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between; /* 왼쪽 + 중앙 정렬 */
+      align-items: center;
+      padding: 0px 40px 20px 40px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+
+
+
+
+
+    /* 🐳 2025-05-31 추가 부분 */
+    #tab3 .scroll-area {
+      max-height: 70vh;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+
+
+
+    .button-row-wrapper {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between; /* 왼쪽 + 중앙 정렬 */
+      align-items: center;
+      padding: 0px 40px 20px 40px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    /* 🐳 */
+    .grid-container3 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 0 30px 0px 30px;
+      margin: 105px auto 0;
+      /* margin-top: 0; */
+      width: 100;
+      max-width: none;
+      box-sizing: border-box;
+    }
+
+    /* 🐳 */
+    .grid-container4 {
+      margin-top: 0 !important;
+      padding: 0 20px;  /* ✅ tab2와 동일하게 padding 추가 */
+    }
+
+    .chart-card3 {
+      background-color: #000000dc;
+      padding: 10px 20px 20px 20px;
+      max-width: 1550px;       /* 카드 최대 너비 */
+
+      border-radius: 12px;
+      margin-bottom: 5px;
+      border: 1px solid #333333;
+      box-shadow: 0 0 7px #00bfff;            /* glow 효과 */
+
+      height: 350px;       /* ✅ 높이 고정 */
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .chart-canvas-wrapper-loss {
+      height: 300px;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    #chartLoss {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+
+    .chart-card4 {
+      background-color: #000000dc;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid #333333;
+      box-shadow: 0 0 7px #00bfff;            /* glow 효과 */
+
+      height: 400px;       /* ✅ 높이 고정 */
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+
+    /* ✅ 테이블에만 스크롤 적용 */
+    .log-table-scroll {
+      max-height: 300px;        /* 원하는 높이 조절 가능 */
+      overflow-y: auto;
+      border: 1px solid #444;
+      border-radius: 8px;
+    }
+
+
+    /* =========== */
+    /* ✅ 자동 조정 세로선 위치 강조 색상 */
+    .highlight-row {
+      background-color: #ff9710 !important;         /*#2ca853*/
+      transition: background-color 1s ease;
+      font-weight: bold;
+    }
+/* ==============================================
+                         팝업
+   ============================================== */
+   .popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    color: black;
+    padding: 30px;
+    z-index: 9999;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  }
+  .popup.active { display: block; }
+
+  .recovery-btn {
+    display: none;
+    margin-left: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    background-color:  #28a745;        /* 진한 녹색 */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    font-family: 'Arial', sans-serif;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .recovery-btn.active { display: inline-block; }
+
+  .recovery-btn:hover {
+    background-color: #36ff8a;        /* 밝은 녹색으로 전환 */
+    transform: translateY(-2px);
+  }
+
+  .status-header.danger {
+    background-color: #dc3545;
+  }
+
+
+  /* ✅ 팝업 경고 시 빨간 배경 */
+  .warning-background {
+    background-color: #dc3545 !important;  /* 진한 빨간 계열 */
+    transition: background-color 0.3s ease-in-out;
+  }
+
+        
+
+    
+
+
+    
+
+
+
+
+
+
+
+
+    </style>
+
+</head>
+
+
+<body>
+<!-- ----------------------------------------------------- -->
+<!--                      Html 영역                         -->
+<!-- ----------------------------------------------------- -->
+    <!-- 시작 부분 -->
+    <!-- 상단 상태 헤더 -->
+    <!-- 상단 상태 헤더: 시스템 가동 상태 및 현재 시간 표시 -->
+    <div class="status-header" id="statusHeader">
+      <div class="status-top-row">
+        <div class="status-text">
+          <span class="status-dot"></span>
+          <span id="systemStatus">정상 - 시스템 가동 중</span>
+        </div>
+        <div class="time-line">
+          <span class="clock-icon"></span>
+          <span id="currentDateTime"></span>
+        </div>
+      </div>
+      <div class="status-bottom-row">
+        <div class="tab-button-group">
+          <button class="tab-btn active" data-tab="tab1">현재상황</button>
+          <button class="tab-btn" data-tab="tab2">시스템 상태</button>
+          <button class="tab-btn" data-tab="tab3">상황 기록 보기</button>
+        </div>
+        
+        <div class="right-buttons">
+          <!-- 기존 백 투 메인 옆에 추가 -->
+          <button id="recoverBtn" class="recovery-btn" onclick="recoverSystem()" style="display: none; background-color: #28a745; color: white; padding: 8px 14px; border: none; border-radius: 5px; cursor: pointer;">
+            재가동
+          </button>
+          <a href="{{ url_for('main') }}" class="back-button">로그아웃</a>
+        </div>
+        
+      </div>
+    </div>
+
+
+
+    <!-- ✅ 탭 내용 영역 유지 -->
+    <div id="tab1" class="tab-pane active">
+      <div class="grid-container">
+
+      <!-- 중량 그래프 -->
+      <div class="chart-card card-1a">
+        <div class="chart-header">
+          <div class="chart-header-left">
+            <h3 class="chart-title">중량</h3>
+            <div class="custom-legend">
+              <span class="legend-box" style="background-color: #00e676;"></span>
+              <span class="legend-label" style="color: lime;">정상</span>
+
+              <span class="legend-box" style="background-color: #ffca28; margin-left: 15px;"></span>
+              <span class="legend-label" style="color: yellow;">경계</span>
+
+              <span class="legend-box" style="background-color: #e53935; margin-left: 15px;"></span>
+              <span class="legend-label" style="color: red;">이상</span>
+            </div>
+          </div>
+          <div class="product-status">현재 생산 제품군: <span>0g</span></div>
+        </div>
+
+          <div class="chart-canvas-wrapper">
+            <canvas id="weightChart"></canvas>
+          </div>
+        </div>
+
+      <!-- RPM 그래프 -->
+      <div class="chart-card card-1b">
+        <div class="chart-header">
+          <div class="chart-header-left">
+            <h3 class="chart-title">RPM</h3>
+            <div class="custom-legend">
+              <span class="legend-box" style="background-color:#2EC9FF;"></span>
+              <span>현재 RPM</span>
+              <span class="legend-box" style="background-color: #ffb300; margin-left: 15px;"></span>
+              <span>추천 RPM</span>
+            </div>
+          </div>
+        </div>
+        <div class="chart-canvas-wrapper">
+          <canvas id="rpmChart"></canvas>
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+
+    <!-- ✅ 탭2: 온도 3개 + RPM 게이지 (2x2 배열) -->
+    <div id="tab2" class="tab-pane">
+      <div class="grid-container2">
+        <!-- 하단 2행 × 2열 -->
+        <div class="grid-2col">
+
+          <!-- 스크류 -->
+          <div class="chart-card2" style="display: flex; gap: 20px;">
+            <video src="/static/video/스크류_2.mp4" autoplay loop muted style="width: 50%; border-radius: 12px;"></video>
+            <div style="width: 50%;">
+              <div class="chart-header2">
+                <h3 class="chart-title2">스크류 온도</h3>
+                <div class="custom-legend">
+                  <span class="legend-box" style="background-color: red;"></span>
+                  <span class="legend-label">스크류 온도</span>
+                </div>
+              </div>
+              <canvas id="screwTempChart"></canvas>
+            </div>
+          </div>
+
+          <!-- 챔버 -->
+          <div class="chart-card2" style="display: flex; gap: 20px;">
+            <video src="/static/video/챔버3.mp4" autoplay loop muted style="width: 50%; border-radius: 12px;"></video>
+            <div style="width: 50%;">
+              <div class="chart-header2">
+                <h3 class="chart-title2">챔버 온도</h3>
+                <div class="custom-legend">
+                  <span class="legend-box" style="background-color: orange;"></span>
+                  <span class="legend-label">챔버 온도</span>
+                </div>
+              </div>
+              <canvas id="chamberTempChart"></canvas>
+            </div>
+          </div>
+
+          <!--노즐 -->
+          <div class="chart-card2" style="display: flex; gap: 20px;">
+            <video src="/static/video/노즐.mp4" autoplay loop muted style="width: 50%; border-radius: 12px;"></video>
+            <div style="width: 50%;">
+              <div class="chart-header2">
+                <h3 class="chart-title2">노즐 온도</h3>
+                <div class="custom-legend">
+                  <span class="legend-box" style="background-color: yellow;"></span>
+                  <span class="legend-label">노즐 온도</span>
+                </div>
+              </div>
+              <canvas id="outputTempChart"></canvas>
+            </div>
+          </div>
+
+          <!-- 칼날 -->
+          <div class="chart-card2" style="display: flex; gap: 20px;">
+            <video src="/static/video/rpm_v.mp4" autoplay loop muted style="width: 50%; border-radius: 12px;"></video>
+            <div style="width: 50%;">
+              <div class="chart-header2">
+                <h3 class="chart-title2">칼날 RPM</h3>
+                <div class="custom-legend">
+                  <span class="legend-box" style="background-color: cyan;"></span>
+                  <span class="legend-label">칼날 RPM</span>
+                </div>
+              </div>
+              <canvas id="knifeRpmChart"></canvas>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+<div id="tab3" class="tab-pane">
+  <!-- ✅ 자동 조정 실패 기록 테이블 -->
+  <div class="grid-container3">  <!-- 🐳 2025-05-31 수정 -->
+    <div class="chart-card3">
+      <div class="chart-header">
+        <h3 class="chart-title">
+          자동 조정 기록</h3>
+      </div>
+
+      <div class="log-table-scroll">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>시간</th>
+              <th>중량</th>
+              <th>RPM_pv</th>
+              <th>RPM_sv</th>
+              <th>스크류 온도_pv</th>
+              <th>스크류 온도_sv</th>
+              <th>챔버 온도_pv</th>
+              <th>챔버 온도_sv</th>
+              <th>사출 온도_pv</th>
+              <th>사출 온도_sv</th>
+            </tr>
+          </thead>
+          <tbody id="log-table-body">
+            <!-- JS로 행 추가 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="chart-card3">
+      <div class="chart-header">
+        <h3 class="chart-title">시간대별 손실량</h3>
+      </div>
+      <div class="chart-canvas-wrapper chart-canvas-wrapper-loss">
+    <canvas id="chartLoss"></canvas>
+  </div>
+</div>
+
+  </div>
+</div>
+
+
+    <!-- ✅ 탭 전환 JS 추가 -->
+    <script>
+      // 페이지 로드 후 실행
+      document.addEventListener("DOMContentLoaded", () => {
+        const buttons = document.querySelectorAll(".tab-btn");
+        const panes = document.querySelectorAll(".tab-pane");
+
+        buttons.forEach(btn => {
+          btn.addEventListener("click", () => {
+            // 모든 버튼과 탭 비활성화
+            buttons.forEach(b => b.classList.remove("active"));
+            panes.forEach(p => p.classList.remove("active"));
+
+            // 클릭한 버튼과 해당 탭 활성화
+            btn.classList.add("active");
+            const target = btn.getAttribute("data-tab");
+            document.getElementById(target).classList.add("active");
+          });
+        });
+      });
+      </script>
+
+
+<!-- --------------------------------------- -->
+<!-- 위험 상태 발생 시 띄워질 팝업 구성 (처음엔 숨김 상태) -->
+<div id="warningPopup" class="popup-overlay" style="display: none;">
+  <div class="popup-box">
+    <h3>⚠️ 위험</h3>
+    <p>자동 조정 실패<br>개입 필요</p>
+    <button onclick="closeWarningPopup()">확인</button>
+    {# '확인' 버튼 클릭 시 goToSystem() 함수가 실행되어 페이지 이동 등을 처리 #}
+  </div>
+</div>
+
+<!-- ----------------------------------------------------- -->
+<!--              Js 영역 ( script 태그 안에 )               -->
+<!-- ----------------------------------------------------- -->
+  <script>
+    // 전역 변수 선언: 가장 위에
+    let chartUpdatePaused = false;
+    let redTimestamps = [];
+
+    function updateDateTime() {
+      const now = new Date();
+      const date = now.toISOString().split('T')[0];
+      const time = now.toTimeString().split(' ')[0];
+      document.getElementById('currentDateTime').textContent = `${date} ${time}`;
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // 전역 변수 선언
+    let weightChart, rpmChart;
+    let scaleData = [], rpmData = [], recommendedData = [], colors = [], labels = [], index = 0;
+    // let changePoints = []; // 세로선 위치를 위한 배열
+    let changeLineIndexes = [];
+    // =========================🐳
+    let redDotTimestamps
+
+    // API에서 데이터 받아오기
+    fetch('/api/production')
+      .then(res => res.json())
+      .then(data => {
+        scaleData = data.values;        // 중량
+        // rpmData = data.k_rpm_pv;        // 현재 탭1 RPM
+        rpmData = data.current_rpm;        // 현재 탭1 RPM
+        colors = data.point_colors;     
+        recommendedData = data.recommended_rpm;     // 추천 RPM
+        changePoints = data.change_points || [];  // 세로선 포인트
+        changeLineIndexes = data.change_points || [];  // 세로선 포인트
+        
+        initCharts();
+        setInterval(updateCharts, 100);     // 150
+        updateLossChart(data.labels, data.loss_values);
+      });
+
+    // 🐳
+    function getInitialLabels() {
+      const now = new Date();
+      const labels = [];
+      for (let i = 49; i >= 0; i--) {
+        const past = new Date(now.getTime() - i * 1000);
+        labels.push(past.toLocaleTimeString('en-GB', {
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        }));
+      }
+      return labels;
+    }
+
+
+    const rpmChangeLinePlugin = {
+      id: 'rpm_change_lines',
+      afterDraw(chart) {
+        const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
+        ctx.save();
+        ctx.strokeStyle = 'red';
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1.5;
+
+        const visibleLabels = chart.data.labels;
+        changeLineIndexes.forEach(globalIndex => {
+          const localIndex = globalIndex - (index - visibleLabels.length + 1);
+          if (localIndex < 0 || localIndex >= visibleLabels.length) return;
+
+          const xCoord = x.getPixelForValue(localIndex);
+          if (isNaN(xCoord)) return;
+
+          ctx.beginPath();
+          ctx.moveTo(xCoord, top);
+          ctx.lineTo(xCoord, bottom);
+          ctx.stroke();
+        });
+
+        ctx.restore();
+      }
+    };
+
+
+    function initCharts() {
+      const weightCtx = document.getElementById('weightChart').getContext('2d');
+      const rpmCtx = document.getElementById('rpmChart').getContext('2d');
+      const 기준중량 = 3.0;
+      const initialLabels = getInitialLabels();
+
+      // 중량 차트
+      weightChart = new Chart(weightCtx, {
+        type: 'line',
+        data: {
+          labels: initialLabels,
+          datasets: [{ label: '중량', data: Array(50).fill(null), borderColor: '#00FFB2', borderWidth: 5, fill: false, tension: 0.4, pointBackgroundColor: Array(50).fill('white'), pointRadius: Array(50).fill(5), pointBorderWidth: 1, pointHoverRadius: 8 }]
+        },
+        options: {
+          animation : {duration:100, easing : 'easeOutCirc',      // duration: 한 번의 애니메이션 지속 시간 (ms), easing: 애니메이션 곡선(자연스러운 흐름)
+            animations: {
+              y: { easing: 'easeOutCirc'   // y축 값 변화 애니메이션 제거
+              } // 애니메이션 후보: 'easeOutCirc', 'easeInOutCirc'
+            }
+          },   
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: {
+            padding: 0
+          },
+          scales: { x: { ticks: { maxTicksLimit: 10, font: {size: 24, weight: 'bold'}, color: '#ccc', padding: 10 }, grid: { color: '#333' } }, y: { ticks: { font: { size: 24}, stepSize: 0.1, color: '#ccc' }, grid: { color: '#333' }, suggestedMin: 2.6, suggestedMax: 3.4 } },
+          plugins: {
+        legend: { display: false },
+        annotation: {
+          annotations: {
+            upperWarning: {
+              type: 'line',
+              yMin: 기준중량 + 0.15,
+              yMax: 기준중량 + 0.15,
+              borderColor: 'yellow',
+              borderDash: [8, 4],
+              borderWidth: 2,
+              label: {
+                // content: '경고 (3.15g)',
+                enabled: true,
+                position: 'end',
+                backgroundColor: 'transparent',
+                color: 'yellow'
+              }
+            },
+            lowerWarning: {
+              type: 'line',
+              yMin: 기준중량 - 0.03,
+              yMax: 기준중량 - 0.03,
+              borderColor: 'yellow',
+              borderDash: [8, 4],
+              borderWidth: 2,
+              label: {
+                // content: '경고 (2.97g)',
+                enabled: true,
+                position: 'end',
+                backgroundColor: 'transparent',
+                color: 'yellow'
+              }
+            },
+            upperDanger: {
+              type: 'line',
+              yMin: 기준중량 + 0.3,
+              yMax: 기준중량 + 0.3,
+              borderColor: 'red',
+              borderDash: [4, 2],
+              borderWidth: 2,
+              label: {
+                // content: '위험 (3.3g)',
+                enabled: true,
+                position: 'end',
+                backgroundColor: 'transparent',
+                color: 'red'
+              }
+            },
+            lowerDanger: {
+              type: 'line',
+              yMin: 기준중량 - 0.05,
+              yMax: 기준중량 - 0.05,
+              borderColor: 'red',
+              borderDash: [4, 2],
+              borderWidth: 2,
+              label: {
+                // content: '위험 (2.95)',
+                enabled: true,
+                position: 'end',
+                backgroundColor: 'transparent',
+                color: 'red'
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
+      // rpm 차트
+      rpmChart = new Chart(rpmCtx, {
+        type: 'line',
+        data: {
+          labels: initialLabels,
+          datasets: [
+            {
+              label: '현재 RPM', data: Array(50).fill(null), borderColor: '#2EC9FF', borderWidth: 5, fill: false, tension: 0.4, pointBackgroundColor: Array(50).fill('blue'), pointRadius: 5, pointBorderWidth: 1, pointHoverRadius: 8 },
+            {
+              label: '추천 RPM', data: Array(50).fill(null), borderColor: '#ffb300', borderWidth: 5, fill: false, tension: 0.4, pointBackgroundColor: Array(50).fill('orange'), pointRadius: 5, pointBorderWidth: 1, pointHoverRadius: 8 }]
+        },
+        options: {
+          animation : {duration:100, easing : 'easeOutCirc'},
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { x: { ticks: { maxTicksLimit: 10, font: {size:24, weight: 'bold'}, color: '#ccc', padding: 10 }, grid: { color: '#333' } }, y: { ticks: { font: { size: 24 }, stepSize: 0.5, color: '#ccc' }, grid: { color: '#333' }, min: 130, max: 200 } },
+          plugins: { title: {display: false}, legend: { display: false, position: 'top', align: 'center', labels: { color: '#ccc', font: { size: 14 }, padding: 8 } } }
+        },
+        plugins: [rpmChangeLinePlugin]
+      });
+
+
+      
+    }
+
+
+    // 중량 값에 따라 점 크기 조절 함수
+    function getPointRadius(value) {
+      if (value <= 2.95 || value >= 3.3) return 11;       // 빨간 점: 이상치
+      else if ((value >= 3.15 && value < 3.3) || (value > 2.95 && value <= 2.97)) return 9;  // 노란 점: 경계값
+      else return 5;                                  // 초록 점점: 정상 5
+    }
+
+
+    function updateCharts() {
+
+      if (chartUpdatePaused) return;  // 🔴 업데이트 정지
+
+
+      if (index < scaleData.length) {
+        const now = new Date();
+        const label = now.toLocaleTimeString('en-GB', { hour12: false });
+
+        // 중량 그래프
+        if (weightChart.data.labels.length >= 50) {
+          weightChart.data.labels.shift();
+          weightChart.data.datasets[0].data.shift();
+          weightChart.data.datasets[0].pointBackgroundColor.shift();
+          weightChart.data.datasets[0].pointRadius.shift();
+        }
+        weightChart.data.labels.push(label);
+        weightChart.data.datasets[0].data.push(scaleData[index]);
+        weightChart.data.datasets[0].pointBackgroundColor.push(colors[index] || 'white');
+        weightChart.data.datasets[0].pointRadius.push(getPointRadius(scaleData[index]));
+        weightChart.update('none');   // 애니메이션 on/off
+
+        // 경고 조건 처리
+        if (colors?.[index] === 'red') {
+          redTimestamps.push(now);
+          redTimestamps = redTimestamps.filter(t => now - t <= 60000);
+          
+          const popupVisible = document.getElementById('warningPopup')?.style.display === 'flex';
+        
+
+
+          if (redTimestamps.length >= 20 && !popupVisible) {
+            triggerWarningPopup();
+          }
+        }
+
+        // RPM 그래프 (현재 + 추천)
+        if (typeof rpmData[index] === 'number' && !isNaN(rpmData[index]) && 
+            typeof recommendedData[index] === 'number' && !isNaN(recommendedData[index])
+          ) {
+          if (rpmChart.data.labels.length >= 50) {
+            rpmChart.data.labels.shift();
+            rpmChart.data.datasets[0].data.shift(); // 현재
+            rpmChart.data.datasets[1].data.shift(); // 추천
+          }
+          rpmChart.data.labels.push(label);
+          rpmChart.data.datasets[0].data.push(rpmData[index]);  // 현재 RPM
+          rpmChart.data.datasets[1].data.push(recommendedData[index])   // 추천 RPM
+
+          // 세로선 추가 조건 확인
+          // if (changePoints.includes(index)) {
+          //   const annotationId = `line-${index}`;
+          //   if (!rpmChart.options.plugins.annotation.annotations[annotationId]) {
+          //     rpmChart.options.plugins.annotation.annotations[annotationId] = {
+          //       type: 'line',
+          //       xMin: rpmChart.data.labels.length - 1,
+          //       xMax: rpmChart.data.labels.length - 1,
+          //       borderColor: 'red',
+          //       borderWidth: 2,
+          //       borderDash: [6, 6],
+          //       label: {
+          //         content: '조정지점',
+          //         enabled: true,
+          //         position: 'start',
+          //         color: '#ff4444',
+          //         font: { size: 12 }
+          //       }
+          //     };
+          //   }
+          // }
+
+          
+          rpmChart.update('none');
+        } else {
+          console.warn(`⚠️ rpmData[${index}] 값이 유효하지 않습니다:`, rpmData[index]);
+        }
+
+        index++;
+      }
+    }
+
+
+    function triggerWarningPopup() {
+      document.getElementById('warningPopup').style.display = 'flex';
+      document.body.classList.add('warning-background');
+
+      // ✅ 상태 문구 변경
+      const statusDiv = document.getElementById('systemStatus');
+      if (statusDiv) statusDiv.textContent = '자동 조정 실패';
+
+      const dot = document.querySelector('.status-dot');
+      if (dot) dot.classList.add('warning');  // ⛔ 상태일 땐 붉은 점
+
+      const statusHeader = document.getElementById('statusHeader');
+      if (statusHeader) statusHeader.classList.add('danger');
+
+      // ✅ 재가동 버튼 표시
+      const restartBtn = document.getElementById('recoverBtn');
+      if (restartBtn) restartBtn.style.display = 'inline-block';
+
+      // 🔴 여기에 추가!
+      chartUpdatePaused = true;
+    }
+
+
+
+  </script>
+
+  <script>
+  // 탭2
+  let screwTempChart, chamberTempChart, outputTempChart, knifeRpmChart;
+  let c_temp_pv = [], n_temp_pv = [], s_temp_pv = [], k_rpm_pv = [];
+
+  fetch('/api/production')
+    .then(res => res.json())
+    .then(data => {
+      c_temp_pv = data.chamber;
+      n_temp_pv = data.output;
+      s_temp_pv = data.screw;
+      k_rpm_pv = data.k_rpm_pv;
+
+      initTempCharts();
+      setInterval(updateTempCharts, 100);
+      setInterval(updateLossChart, 100)
+    });
+
+  let tempIndex = 0;
+
+  function initTempCharts() {
+    // const totalCtx = document.getElementById('totalTempChart').getContext('2d');
+    const screwCtx = document.getElementById('screwTempChart').getContext('2d');
+    const chamberCtx = document.getElementById('chamberTempChart').getContext('2d');
+    const outputCtx = document.getElementById('outputTempChart').getContext('2d');
+    const knifeCtx = document.getElementById('knifeRpmChart').getContext('2d');
+    const initialLabels = getInitialLabels();
+
+    const tempOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 100,            // 애니메이션 속도 (ms)
+        easing: 'easeOutCirc',    // 부드러운 곡선
+        animations: {
+          y: { type: 'number', easing: 'linear', duration: 0 }, // ✅ y축 변화 시 튐 제거
+        }
+      },
+      layout: {
+        padding: { left: 0 } // 그래프 전체 왼쪽 패딩 제거
+      },
+      scales: {
+        x: {
+          ticks: { font: { size: 5 }, color: '#ccc', maxTicksLimit: 10 }, grid: { color: '#333' }
+        },
+        y: {
+          ticks: { font: { size: 24 }, color: '#ccc' }, grid: { color: '#333' }, min: 65, max: 75
+        },
+      },
+      plugins: {
+        legend: { display: false, labels: { color: '#ccc' } }
+      }
+    };
+
+
+    // 깊은 복사 (scales 내부까지 따로 쓰고 싶으니까!)
+    const knifeOptions = JSON.parse(JSON.stringify(tempOptions));
+
+    delete knifeOptions.scales.y.min;
+    delete knifeOptions.scales.y.max;
+
+    // 칼날만 Y축 범위 따로 설정
+    knifeOptions.scales.y.suggestedMin = 180;
+    knifeOptions.scales.y.suggestedMax = 183;
+
+
+    screwTempChart = new Chart(screwCtx, {
+      type: 'line',
+      data: { labels: initialLabels, datasets: [{ label: '스크류 온도', data: Array(50).fill(null), borderColor: 'red' }] },
+      options: tempOptions
+    });
+
+    chamberTempChart = new Chart(chamberCtx, {
+      type: 'line',
+      data: { labels: initialLabels, datasets: [{ label: '챔버 온도', data: Array(50).fill(null), borderColor: 'orange' }] },
+      options: tempOptions
+    });
+
+    outputTempChart = new Chart(outputCtx, {
+      type: 'line',
+      data: { labels: initialLabels, datasets: [{ label: '노즐 온도', data: Array(50).fill(null), borderColor: 'yellow' }] },
+      options: tempOptions
+    });
+
+    knifeRpmChart = new Chart(knifeCtx, {
+      type: 'line',
+      data: { labels: initialLabels, datasets: [{ label: '칼날 RPM', data: Array(50).fill(null), borderColor: 'cyan' }] },
+      options: knifeOptions
+    });
+  }
+
+  function updateTempCharts() {
+
+    if (chartUpdatePaused) return;
+
+
+    if (tempIndex < s_temp_pv.length) {
+      const now = new Date();
+      const label = now.toLocaleTimeString('en-GB', { hour12: false });
+
+      // 공통 처리
+      [screwTempChart, chamberTempChart, outputTempChart, knifeRpmChart].forEach(chart => {
+        if (chart.data.labels.length >= 50) {
+          chart.data.labels.shift();
+          chart.data.datasets.forEach(ds => ds.data.shift());
+        }
+        chart.data.labels.push(label);
+      });
+
+      // totalTempChart.data.datasets[0].data.push(s_temp_pv[tempIndex]);
+      // totalTempChart.data.datasets[1].data.push(c_temp_pv[tempIndex]);
+      // totalTempChart.data.datasets[2].data.push(n_temp_pv[tempIndex]);
+
+      screwTempChart.data.datasets[0].data.push(s_temp_pv[tempIndex]);
+      chamberTempChart.data.datasets[0].data.push(c_temp_pv[tempIndex]);
+      outputTempChart.data.datasets[0].data.push(n_temp_pv[tempIndex]);
+      knifeRpmChart.data.datasets[0].data.push(k_rpm_pv[tempIndex]);
+
+      [ screwTempChart, chamberTempChart, outputTempChart, knifeRpmChart].forEach(chart => chart.update('none'));
+
+      tempIndex++;
+    }
+  }
+  </script>
+  <script>
+
+let logData = [];   // 전체 데이터 저장용
+    let logIndex = 0;   // 현재 인덱스
+    const tableBody = document.getElementById('log-table-body');
+
+    function populateLogTable() {
+      fetch('/api/production')
+        .then(res => res.json())
+        .then(data => {
+          logData = data.log_rows;
+          logIndex = 0;
+          setInterval(addNextLogRow, 100);  // 1초마다 한 행씩 추가
+        });
+    }
+
+    function addNextLogRow() {
+
+      if (chartUpdatePaused) return;  // 🔴 업데이트 정지
+      
+      if (logIndex < logData.length) {
+        const row = logData[logIndex];
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('ko-KR', { hour12: false });  // 고정된 현재 시간
+
+        const tr = document.createElement('tr');
+
+        // ✅ 세로선 index와 같으면 초록 강조
+        if (changeLineIndexes.includes(logIndex)) {
+          tr.classList.add('highlight-row');
+        }
+
+        const timeTd = document.createElement('td');
+        timeTd.textContent = timeStr;
+        tr.appendChild(timeTd);
+
+        row.forEach(cell => {
+          const td = document.createElement('td');
+          td.textContent = cell;
+          tr.appendChild(td);
+        });
+
+        tableBody.prepend(tr);
+        logIndex++;
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      populateLogTable();
+    });
+  </script>
+<script>
+      const 기준중량 = 3.0;
+      let lossValues = [];
+      const lossHistory = Array(24).fill(0);  // ✅ 시간대별 누적 손실량 (0시~23시)
+      let chartLoss = null;
+
+      fetch('/api/production')
+        .then(res => res.json())
+        .then(data => {
+          scaleData = data.values;
+          labels = data.labels;
+          lossValues = scaleData.map(v => Math.abs(v - 기준중량));
+          initLossChart();
+          setInterval(() => {
+            updateLossChart();
+            index++;
+          }, 1000);
+        });
+
+      function initLossChart() {
+        const ctx = document.getElementById('chartLoss').getContext('2d');
+        chartLoss = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: Array.from({ length: 24 }, (_, i) => `${i}시`),
+            datasets: [{
+              label: '시간대별 손실량 (g)',
+              data: new Array(24).fill(0),
+              backgroundColor: 'yellow',
+              borderRadius: 4,
+            }]
+          },
+          options: {
+            animation : {duration:100, easing : 'easeOutCirc'},
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+              legend: { display: false },
+              title: {
+                display: false,
+                text: '시간대별 손실량',
+                color: '#fff'
+              }
+            },
+            layout: {padding: 0},
+            scales: {
+              x: {
+                ticks: { color: '#fff' },
+                grid: { color: '#333' }
+              },
+              y: {
+                beginAtZero: true,
+                ticks: { font: {size:24}, color: '#fff' },
+                grid: { color: '#333' },
+                title: {
+                  display: true,
+                  text: '손실량 (g)',
+                  color: '#fff'
+                }
+              }
+            }
+          }
+        });
+      }
+
+      function updateLossChart() {
+
+        if (chartUpdatePaused) return;
+        
+        if (index < lossValues.length) {
+          const now = new Date();
+          const hour = now.getHours();
+          const loss = Math.abs(lossValues[index]);
+
+          if (!isNaN(loss)) {
+            lossHistory[hour] += loss;
+          }
+
+          chartLoss.data.datasets[0].data = lossHistory.map(v => v.toFixed(2));
+          chartLoss.update();
+        }
+      }
+    </script>
+
+    <script>
+      function recoverSystem() {
+        // 1. 그래프 다시 시작
+        chartUpdatePaused = false;
+
+        // 2. 배경색 원상복구
+        document.body.classList.remove('warning-background');
+
+        // 3. 상태 문구 복원
+        const statusDiv = document.getElementById('systemStatus');
+        if (statusDiv) statusDiv.textContent = '정상 - 시스템 가동 중';
+
+        const dot = document.querySelector('.status-dot');
+        if (dot) dot.classList.remove('warning');  // ✅ 복원 시 초록색으로 되돌림
+
+        const statusHeader = document.getElementById('statusHeader');
+        if (statusHeader) statusHeader.classList.remove('danger');
+
+        // 4. 팝업 숨기기
+        const popup = document.getElementById('warningPopup');
+        if (popup) popup.style.display = 'none';
+
+        // 5. 재가동 버튼 숨김
+        const restartBtn = document.getElementById('recoverBtn');
+        if (restartBtn) restartBtn.style.display = 'none';
+
+        // 6. 빨간점 시간 초기화
+        redTimestamps = [];
+      }
+
+    </script>
+    <script>
+      // ✅ 기존 recoverSystem 함수 아래쪽에 추가
+      function closeWarningPopup() {
+        const popup = document.getElementById('warningPopup');
+        if (popup) popup.style.display = 'none';
+
+        const restartBtn = document.getElementById('recoverBtn');
+        if (restartBtn) restartBtn.style.display = 'inline-block';
+      }
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,545 @@
+{% extends 'admin_base.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>시스템 관리</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- ✅ 전체 스타일 정의 -->
+  <style>
+    /* 기본 배경 및 텍스트 설정 */
+    body {
+      background-color: #050525;
+      color: white;
+      font-family: 'Pretendard', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* 제목 스타일 */
+    h2 {
+      margin: 0;
+      padding: 10px 20px;
+      font-size: 26px;
+    }
+
+    /* ✅ 대시보드 레이아웃 (3열 그리드 + 행간격) */
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-auto-rows: minmax(0, auto);
+      column-gap: 20px;
+      row-gap: 20px;
+      padding: 0 20px 20px 20px;
+    }
+
+    /* 생산 재고량 텍스트 영역 */
+    .top-info {
+      grid-column: span 3;
+      text-align: right;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    /* ✅ 일반 카드 (그래프용) */
+    .card {
+      background-color: #000000dc; 
+      border: 1px solid #333333;
+      box-shadow: 0 0 7px #00bfff;            /* glow 효과 */
+      border-radius: 12px;
+      /* padding: 20px;
+      height: 100%; */
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      overflow: hidden;
+      padding: 0;
+      min-height: 360px;
+    }
+
+    .card h3 {
+      font-size: 18px;
+      margin: 0 0 10px;
+      
+      padding: 6px 0px 0px 12px;
+      border-radius: 6px;
+      display: block;
+      font-weight: bold;
+      text-align: left;
+      width: 100%;
+      font-size: 26px;
+      color: rgb(255, 255, 255);
+      margin-top: 0px;          /* ✅ 위 여백 제거 */
+      margin-bottom: 30px;      /* (선택) 아래 여백만 유지 */
+      align-self: stretch;   /* ✅ 부모가 center여도 h4만 예외로 전체 채움 */
+
+      margin-top: 0px;    /* ✅ 이거 꼭 추가하세요 */
+    }
+
+    .card canvas {
+      flex-grow: 1;
+      width: 100% !important;
+      height: 300px !important;
+      max-height: 300px;
+      display: block;
+      margin-top: 0;
+      margin-bottom: 0;
+      margin: 0;
+      padding: 0;
+       /* border: 1px solid red; */
+    }
+
+    /* ✅ 게이지 + 이미지 + 테이블 카드 */
+    .card-temp-visual {
+      display: flex;
+      background-color: #000000dc; 
+      border: 1px solid #333333;
+      box-shadow: 0 0 7px #00bfff;            /* glow 효과 */
+      border-radius: 12px;
+      padding: 20px;
+      overflow: hidden;
+    }
+
+    /* 왼쪽: 이미지 + 게이지 */
+    .left-side {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .model-img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto 16px auto;
+      background-color: #000;           /* 배경: GIF에 어울리는 어두운 톤 */
+      border-radius: 8px;               /* 둥근 테두리 */
+    }
+    .gauge-percent {
+      font-size: 40px;
+      font-weight: bold;
+      margin-top: 0px;
+    }
+
+    /* 오른쪽: 실시간 테이블 */
+    .right-side {
+      width: 200px;
+      margin-left: 50px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* 테이블 스타일 */
+    .temp-log-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      color: #eee;
+    }
+
+    .highlight-row {
+      background-color: #2ca853;
+      transition: background-color 1s ease; /* 부드럽게 사라지게 */
+      font-weight: bold;
+    }
+
+    .temp-log-table th {
+      text-align: center;
+      vertical-align: middle;
+      border-bottom: 1px solid #555;
+      padding: 6px 4px;
+      font-size: 20px;
+    }
+
+    .temp-log-table td {
+      text-align: center;
+      vertical-align: middle;
+      padding: 6px 4px;
+      font-size: 20px;
+    }
+
+    .card-temp-visual canvas {
+      width: 180px !important;
+      height:180px !important;
+    }
+
+  </style>
+
+
+</head>
+
+<body>
+  <!-- ✅ 제목 영역 -->
+  <h2 style="margin: 0; padding: 20px; color: #fff; font-size: 26px;">
+  <img src="/static/images/system_img.png"
+       alt="시스템 관리 아이콘"
+       style="width: 40px; height: 40px; vertical-align: middle; margin-right: 10px;">
+  시스템 관리
+</h2>
+
+  <!-- ✅ 대시보드 그리드 시작 -->
+  <div class="dashboard">
+    
+    <!-- ✅ 중량 그래프 -->
+    <div class="card">
+      <h3>중량</h3>
+      <canvas id="weightChart"></canvas>
+    </div>
+
+    <!-- ✅ 로스 시간대 바 그래프 -->
+    <div class="card">
+      <h3>시간대 불량품 개수</h3>
+      <canvas id="lossChart"></canvas>
+    </div>
+
+    <!-- ✅ RPM 그래프 -->
+    <div class="card">
+      <h3>RPM</h3>
+      <canvas id="rpmChart"></canvas>
+    </div>
+
+    <!-- ✅ 스크류 게이지 카드 -->
+    <div class="card-temp-visual">
+      <div class="left-side">
+        <img src="{{ url_for('static', filename='images/screw.gif') }}" class="model-img" alt="스크류 모델">
+        <canvas id="gaugeScrew"></canvas>
+        <div class="gauge-percent" id="valScrew">-- ℃</div>
+      </div>
+      <div class="right-side">
+        <table class="temp-log-table" id="logTableScrew">
+          <thead>
+            <tr>
+              <th>시간</th>
+              <th>스크류 온도</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- 1행: highlight-row -->
+            <tr class="highlight-row"><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <!-- 2~10행: 빈 행 -->
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ✅ 챔버 게이지 카드 -->
+    <div class="card-temp-visual">
+      <div class="left-side">
+        <img src="{{ url_for('static', filename='images/chamber.gif') }}" class="model-img" alt="챔버 모델">
+        <canvas id="gaugeChamber"></canvas>
+        <div class="gauge-percent" id="valChamber">-- ℃</div>
+      </div>
+      <div class="right-side">
+        <table class="temp-log-table" id="logTableChamber">
+          <thead>
+            <tr>
+              <th>시간</th>
+              <th>챔버 온도</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- 1행: highlight-row -->
+            <tr class="highlight-row"><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <!-- 2~10행: 빈 행 -->
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ✅ 노즐 게이지 카드 -->
+    <div class="card-temp-visual">
+      <div class="left-side">
+        <img src="{{ url_for('static', filename='images/nozzle.gif') }}" class="model-img" alt="노즐 모델">
+        <canvas id="gaugeNozzle"></canvas>
+        <div class="gauge-percent" id="valNozzle">-- ℃</div>
+      </div>
+      <div class="right-side">
+        <table class="temp-log-table" id="logTableNozzle">
+          <thead>
+            <tr>
+              <th>시간</th>
+              <th>노즐 온도</th>
+            </tr>
+          </thead>
+          <tbody>
+                <!-- 1행: highlight-row -->
+            <tr class="highlight-row"><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <!-- 2~10행: 빈 행 -->
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+            <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ 실시간 차트 및 게이지 처리 스크립트 -->
+  <script>
+    // Chart.js 플러그인: 도넛 차트에 바늘(needle) 표시
+    Chart.register({
+      id: 'needlePlugin',
+      afterDatasetDraw(chart) {
+        const needleValue = chart.options.customNeedleValue;
+        if (needleValue == null || chart.config.type !== 'doughnut') return;
+
+        const { ctx } = chart;
+        const meta = chart.getDatasetMeta(0).data[0];
+        const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+        const angle = Math.PI + Math.PI * (needleValue / total);
+        const cx = meta.x;
+        const cy = meta.y;
+        const r = meta.outerRadius;
+        const needleLength = r * 0.9;
+        const x = cx + needleLength * Math.cos(angle);
+        const y = cy + needleLength * Math.sin(angle);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(x, y);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'white';
+        ctx.stroke();
+        ctx.restore();
+      }
+    });
+
+    // 전역 차트 및 데이터 변수
+    let weightChart, rpmChart, lossChart;
+    let gaugeScrew, gaugeChamber, gaugeNozzle;
+    let redLossCount = Array(24).fill(0); // 시간대별 로스 카운트
+
+    // ✅ 게이지 차트 생성 함수
+    function drawCustomGauge(ctxId, initialValue, max = 100) {
+      const ctx = document.getElementById(ctxId).getContext('2d');
+      return new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          datasets: [{
+            data: [initialValue, max - initialValue],
+            backgroundColor: ['#00FF88', '#333'],
+            borderWidth: 0,
+            circumference: 180,
+            rotation: 270,
+            cutout: '80%'
+          }]
+        },
+        options: {
+          responsive: false,
+          customNeedleValue: initialValue,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          }
+        }
+      });
+    }
+
+    // ✅ 게이지 차트와 로그 테이블을 실시간 업데이트하는 함수
+function updateCustomGauge(chart, value, labelId, max = 100, logTableId = null) {
+  // 1) 게이지 업데이트
+  chart.options.customNeedleValue = value;
+  chart.data.datasets[0].data[0] = value;
+  chart.data.datasets[0].data[1] = max - value;
+  chart.update();
+
+  // 2) 숫자 레이블 업데이트
+  document.getElementById(labelId).textContent = value.toFixed(1) + ' ℃';
+
+  // 3) 테이블 업데이트 (행 고정, 텍스트만 스크롤)
+  if (logTableId) {
+    const tbody = document.getElementById(logTableId).querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    // 아래에서부터 두 번째 행까지, 윗 행의 텍스트를 복사
+    for (let i = rows.length - 1; i > 0; i--) {
+      const aboveTds = rows[i - 1].querySelectorAll('td');
+      const tds = rows[i].querySelectorAll('td');
+      tds[0].textContent = aboveTds[0].textContent;
+      tds[1].textContent = aboveTds[1].textContent;
+    }
+
+    // 맨 위 행에만 새로운 데이터 입력
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    const formattedTime = `${hh}:${mm}:${ss}`;
+
+    const firstTds = rows[0].querySelectorAll('td');
+    firstTds[0].textContent = formattedTime;
+    firstTds[1].textContent = value.toFixed(1) + ' ℃';
+
+    // highlight-row 클래스는 맨 위 행에만
+    rows.forEach((tr, idx) => {
+      if (idx === 0) tr.classList.add('highlight-row');
+      else tr.classList.remove('highlight-row');
+    });
+  }
+}
+
+    // ✅ 일반 차트들(중량, 로스, RPM) 초기 생성
+    function drawCharts() {
+      const options = {
+        layout: {
+          padding: { top: 0, bottom: 12, left: 16, right: 16 }
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: '#ccc' }, grid: { color: '#333' } },
+          y: { ticks: { color: '#ccc' }, grid: { color: '#333' } }
+        },
+        plugins: { legend: { labels: { color: '#ccc' } } }
+      };
+
+      const hours = Array.from({ length: 24 }, (_, i) => i.toString());
+
+      weightChart = new Chart(document.getElementById('weightChart').getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: '중량',
+            data: [],
+            borderColor: '#00FFB2',
+            pointBackgroundColor: [],
+            pointRadius: 4
+          }]
+        },
+        options
+      });
+
+      rpmChart = new Chart(document.getElementById('rpmChart').getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'RPM',
+            data: [],
+            borderColor: '#2EC9FF'
+          }]
+        },
+        options
+      });
+
+      lossChart = new Chart(document.getElementById('lossChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: hours,
+          datasets: [{
+            label: '로스',
+            data: redLossCount,
+            backgroundColor: 'yellow'
+          }]
+        },
+        options
+      });
+
+      gaugeScrew = drawCustomGauge('gaugeScrew', 0);
+      gaugeChamber = drawCustomGauge('gaugeChamber', 0);
+      gaugeNozzle = drawCustomGauge('gaugeNozzle', 0);
+    }
+
+    // ✅ 실시간 데이터 API 호출 및 UI 업데이트 시작
+    function startRealtimeUpdates() {
+      fetch('/api/production')
+        .then(res => res.json())
+        .then(data => {
+          drawCharts();
+          let index = 0;
+
+          const timer = setInterval(() => {
+            if (index >= data.values.length) {
+              clearInterval(timer);
+              return;
+            }
+
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const formattedTime = `${hours}:${minutes}:${seconds}`;
+            const label =  formattedTime;
+            const hour = now.getHours();
+
+            const weight = data.values[index];
+            const rpm = data.k_rpm_pv[index];
+            const s_temp = data.screw[index];
+            const c_temp = data.chamber[index];
+            const n_temp = data.output[index];
+            const color = data.point_colors[index];
+
+            // 중량 차트
+            if (weightChart.data.labels.length >= 10) {
+              weightChart.data.labels.shift();
+              weightChart.data.datasets[0].data.shift();
+              weightChart.data.datasets[0].pointBackgroundColor.shift();
+            }
+            weightChart.data.labels.push(label);
+            weightChart.data.datasets[0].data.push(weight);
+            weightChart.data.datasets[0].pointBackgroundColor.push(color);
+            weightChart.update();
+
+            // 로스 색상기반 카운트
+            if (color === 'red') {
+              redLossCount[hour]++;
+              lossChart.update();
+            }
+
+            // RPM
+            if (rpmChart.data.labels.length >= 10) {
+              rpmChart.data.labels.shift();
+              rpmChart.data.datasets[0].data.shift();
+            }
+            rpmChart.data.labels.push(label);
+            rpmChart.data.datasets[0].data.push(rpm);
+            rpmChart.update();
+
+            // 게이지 + 로그 테이블
+            updateCustomGauge(gaugeScrew, s_temp, 'valScrew', 100, 'logTableScrew');
+            updateCustomGauge(gaugeChamber, c_temp, 'valChamber', 100, 'logTableChamber');
+            updateCustomGauge(gaugeNozzle, n_temp, 'valNozzle', 100, 'logTableNozzle');
+
+            index++;
+          }, 1000);
+        })
+        .catch(err => console.error('데이터 불러오기 오류:', err));
+    }
+
+    // ✅ 초기화 시작
+    window.onload = startRealtimeUpdates;
+  </script>
+</body>
+
+</html>
+{% endblock %}

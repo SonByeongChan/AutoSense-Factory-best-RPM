@@ -1,0 +1,587 @@
+{% extends 'admin_base.html' %}
+{% block content %}
+
+<!-- ✅ CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin_status.css') }}">
+<style>
+
+/*다운로드 버튼에 관한 CSS*/  
+
+  /* CSS (메인 스타일시트나 <style> 태그 안에 추가) */
+
+  /* CSS (메인 스타일시트나 <style> 태그 안에 추가) */
+.btn-csv-download {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #1c1c1c;         /* 카드와 비슷한 어두운 배경 */
+  color: #ffffff;                    /* 은은한 밝은 블루 텍스트 */
+  border: 1px solid #333333;         /* 얇고 정제된 블루 테두리 */
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-csv-download:hover,
+.btn-csv-download:focus {
+  background-color: #3a3a3a;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 0 6px rgba(0, 136, 204, 0.3); /* subtle glow */
+}
+
+
+
+.btn-csv-download .icon-download {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  fill: currentColor;
+}
+
+/* =========================== */
+.dashboard-date-filter {
+  display: flex;
+  align-items: center;   /* ✅ 수직 가운데 정렬 */
+  gap: 10px;
+  padding: 0;
+  background: #000000dc;
+  border-radius: 20px;
+  max-width: 400px;
+  /* border: 1px solid #333333;
+  box-shadow: 0 0 7px #00bfff; */
+  margin-left: 80px;
+  position: relative;
+}
+
+.calendar-icon {
+  font-size: 20px;
+  cursor: pointer;
+}
+
+#selected-date-text {
+  font-size: 16px;
+  color: white;
+}
+
+.datepicker-popup {
+  position: absolute;
+  top: 30px;   /* 📅 아이콘 아래 간격 */
+  left: 0;
+  background-color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #aaa;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  z-index: 999;
+  display: none;
+}
+
+.datepicker-popup input[type="date"] {
+  border: none;
+  background: white;
+  font-size: 16px;
+  font-family: 'Pretendard', sans-serif;
+  color: black;
+  outline: none;
+}
+
+/* ✅ 고급 네온 테마 버튼 스타일 */
+.neon-button {
+  background-color: #008CBA;         /* 단색 파란색 */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  box-shadow: none;                  /* 네온 glow 제거 */
+}
+
+.neon-button:hover {
+  background-color: #0073a6;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: none;
+}
+
+.status-header {
+  position: fixed;
+  top: 60px; /* 헤더 높이만큼 여백 조정 */
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: #0b0f23; /* 어두운 배경 유지 */
+  padding: 16px 24px;
+  border-bottom: 1px solid #00bfff;
+  box-shadow: 0 4px 10px rgba(0, 191, 255, 0.15);
+}
+
+.top-bar-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 20px;
+  margin: 20px 0 20px 0px;         /* 왼쪽 정렬 */
+  max-width: 500px;          /* ✅ 여기서 너비를 조절해! */
+  padding: 8px 20px;
+  background: #000000dc;
+  border-radius: 20px;
+  box-shadow: 0 0 7px #00bfff;
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.tab-buttons .tab {
+  font-size: 15px;
+  font-weight: bold;
+  color: #aaa;
+  cursor: pointer;
+  padding: 6px 10px;
+}
+
+.tab-buttons .tab.active {
+  color: #00bfff;
+  border-bottom: 2px solid #00bfff;
+}
+
+.calendar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+
+
+  position: relative;
+}
+
+
+
+
+
+</style>
+
+<!-- <h2 style="color:white; font-weight: bold; margin-bottom: 12px;">📆 현황 관리</h2> -->
+<h2 style="margin: 0; padding: 20px; color: #fff; font-size: 26px;">
+  <img src="/static/images/status_img.png"
+       alt="현황관리 아이콘"
+       style="width: 40px; height: 40px; vertical-align: middle; margin-right: 10px;">
+  현황 관리
+</h2>
+<!-- 🔷 고정 탭바 + 날짜 선택기 -->
+<div class="top-bar-wrapper">
+  <div class="tab-buttons">
+    <span class="tab active" onclick="setTab(this, 'day')">일</span>
+    <span class="tab" onclick="setTab(this, 'week')">주</span>
+    <span class="tab" onclick="setTab(this, 'month')">월</span>
+  </div>
+  <div class="calendar-wrap">
+    <span class="calendar-icon" onclick="toggleDatePicker()">📅</span>
+    <span id="selected-date-text">{{ selected_date or '' }}</span>
+    <div class="datepicker-popup" id="datepicker-popup">
+      <input type="date" id="datepicker-input" onchange="applySelectedDate()">
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- ✅ 일별 콘텐츠 -->
+<div id="tab-content-day" class="tab-sheet">
+  <div class="chart-card-row">
+    <div class="chart-card" style="color: #00BFFF;"><h4>시간대별 생산량</h4><canvas id="chartProduction"></canvas></div>
+    <div class="chart-card" style="color: #FF5555;"><h4>시간대별 손실률</h4><canvas id="chartLoss"></canvas></div>
+    <div class="chart-card" style="color: #00FF88;"><h4>시간대별 매출액</h4><canvas id="chartRevenue"></canvas>
+    </div>
+  </div>
+
+  <!-- ✅ 그래프 사이 구분선 -->
+  <hr style="margin: 20px 0 4px 0; border: none; border-top: 1px solid #333333; box-shadow: 0 0 7px #00bfff">
+
+  <div class="csv-download">
+  <button type="button" class="btn btn-csv-download" onclick="exportDayCSV()" aria-label="일간 CSV 다운로드">
+    <!-- 다운로드 아이콘 -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon-download" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 16l4-5h-3V4h-2v7H8l4 5zm-8 2v2h16v-2H4z"/>
+    </svg>
+    일간 CSV 다운로드
+  </button>
+  </div>
+
+  <table class="data-table" id="daily-table">
+    <thead>
+      <tr>
+        <th>시간</th><th>생산량</th><th>불량률</th><th>손실률</th><th>매출액</th>
+      </tr>
+    </thead>
+    <tbody id="table-body">
+    </tbody>
+  </table>
+</div>
+
+<!-- ✅ 주간 콘텐츠 -->
+<div id="tab-content-week" class="tab-sheet" style="display:none;">
+  <div class="chart-card-row">
+    <div class="chart-card" style="color: #00BFFF;"><h4>일별 생산량</h4><canvas id="weekProductionChart"></canvas></div>
+    <div class="chart-card" style="color: #FF5555;"><h4>일별 손실률</h4><canvas id="weekLossChart"></canvas></div>
+    <div class="chart-card" style="color: #00FF88;"><h4>일별 매출액</h4><canvas id="weekRevenueChart"></canvas></div>
+  </div>
+
+  <!-- ✅ 그래프 사이 구분선 -->
+  <hr style="margin: 20px 0 4px 0; border: none; border-top: 1px solid #333333; box-shadow: 0 0 7px #00bfff">
+
+  <div class="csv-download">
+  <button type="button" class="btn btn-csv-download" onclick="exportWeekCSV()" aria-label="주간 CSV 다운로드">
+    <!-- 다운로드 아이콘 -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon-download" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 16l4-5h-3V4h-2v7H8l4 5zm-8 2v2h16v-2H4z"/>
+    </svg>
+    주간 CSV 다운로드
+  </button>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>주차</th><th>생산량</th><th>불량률</th><th>손실률</th><th>매출액</th></tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="5">주간 데이터 준비 중...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ✅ 월간 콘텐츠 -->
+<div id="tab-content-month" class="tab-sheet" style="display:none;">
+  <div class="chart-card-row">
+    <div class="chart-card" style="color: #00BFFF;"><h4>주차별 생산량</h4><canvas id="monthProductionChart"></canvas></div>
+    <div class="chart-card" style="color: #FF5555;"><h4>주차별 손실률</h4><canvas id="monthLossChart"></canvas></div>
+    <div class="chart-card" style="color: #00FF88;"><h4>주차별 매출액</h4><canvas id="monthRevenueChart"></canvas></div>
+  </div>
+
+  <!-- ✅ 그래프 사이 구분선 -->
+  <hr style="margin: 20px 0 4px 0; border: none; border-top: 1px solid #333333; box-shadow: 0 0 7px #00bfff">
+
+  
+  <div class="csv-download">
+  <button type="button" class="btn btn-csv-download" onclick="exportMonthCSV()" aria-label="월간 CSV 다운로드">
+    <!-- 다운로드 아이콘 -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon-download" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <path d="M12 16l4-5h-3V4h-2v7H8l4 5zm-8 2v2h16v-2H4z"/>
+    </svg>
+    월간 CSV 다운로드
+  </button>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>월</th><th>생산량</th><th>불량률</th><th>손실률</th><th>매출액</th></tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="5">월간 데이터 준비 중...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+<script>
+const hours = [...Array(24).keys()].map(h => h + '시');
+const weekLabels = ['월', '화', '수', '목', '금', '토', '일'];
+const monthLabels = ['1주차', '2주차', '3주차', '4주차', '5주차', '6주차'];
+
+let selectedDate = null;
+let chartRefs = {};
+
+// ▶ 공통 차트 그리기 함수
+function drawBar(id, label, data, color) {
+  const ctx = document.getElementById(id).getContext('2d');
+  if (chartRefs[id]) chartRefs[id].destroy();
+
+  const labels = id.startsWith("week") ? weekLabels :
+                 id.startsWith("month") ? monthLabels : hours;
+
+  chartRefs[id] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label, data, backgroundColor: color, hoverBackgroundColor: '#ffffff', borderRadius: 4 }]
+    },
+    options: {
+      hover: {
+        mode: 'index',
+        intersect: false
+      },
+      responsive: true,
+      scales: {
+        x: { ticks: { color: '#ccc', minRotation: 0, maxRotation: 0 }, grid: { color: '#444' } },
+        y: { beginAtZero: true, ticks: { color: '#ccc' }, grid: { color: '#444' } }
+      },
+      plugins: { legend: { labels: { color: '#fff' } } }
+    }
+  });
+}
+
+// ▶ 일간 데이터 불러오기 및 렌더링
+async function fetchDayData() {
+  const res = await fetch(`/api/production_day?date=${selectedDate}`);
+  const json = await res.json();
+  drawBar('chartProduction', '생산량 (g)', json.production_by_hour, '#00BFFF');
+  drawBar('chartLoss', '손실률 (g)', json.loss_by_hour, '#FF5555');
+  drawBar('chartRevenue', '매출액 (₩)', json.revenue_by_hour, '#00FF88');
+  renderDailyTable(json);
+}
+
+// ▶ 주간 데이터
+async function fetchWeekData() {
+  const res = await fetch(`/api/production_week?date=${selectedDate}`);
+  const data = await res.json();
+  drawBar('weekProductionChart', '생산량 (g)', data.production_by_day, '#00BFFF');
+  drawBar('weekLossChart', '손실률 (g)', data.loss_by_day, '#FF5555');
+  drawBar('weekRevenueChart', '매출액 (₩)', data.revenue_by_day, '#00FF88');
+  renderWeeklyTable(data);
+}
+
+// ▶ 월간 데이터
+async function fetchMonthData() {
+  const res = await fetch(`/api/production_month?date=${selectedDate}`);
+  const data = await res.json();
+  drawBar('monthProductionChart', '생산량 (g)', data.production_by_week, '#00BFFF');
+  drawBar('monthLossChart', '손실률 (g)', data.loss_by_week, '#FF5555');
+  drawBar('monthRevenueChart', '매출액 (₩)', data.revenue_by_week, '#00FF88');
+  renderMonthlyTable(data);
+}
+
+// ✅ CSV 전체 저장 함수
+function exportToCSV(filename, dataArray) {
+  const csvRows = [];
+  const headers = Object.keys(dataArray[0]);
+  csvRows.push(headers.join(','));
+
+  for (const row of dataArray) {
+    const values = headers.map(header => JSON.stringify(row[header] ?? ''));
+    csvRows.push(values.join(','));
+  }
+
+  const BOM = '\uFEFF'; // ✅ Excel 호환을 위한 BOM
+  const blob = new Blob([BOM + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+}
+   
+
+// ▶ 일간 CSV 전체 저장
+function exportDayCSV() {
+  const date = document.getElementById('selected-date').value;
+  fetch(`/api/production_day?date=${date}`)
+    .then(res => res.json())
+    .then(data => {
+      const fullData = [];
+      for (let i = 0; i < 24; i++) {
+        fullData.push({
+          시간: i + "시",
+          생산량: data.production_by_hour[i],
+          불량률: data.defect_by_hour[i],
+          손실률: data.loss_by_hour[i],
+          매출액: data.revenue_by_hour[i]
+        });
+      }
+      exportToCSV(`일간현황_${date}.csv`, fullData);;
+    });
+}
+
+function exportWeekCSV() {
+  const date = document.getElementById('selected-date').value;
+  fetch(`/api/production_week?date=${date}`)
+    .then(res => res.json())
+    .then(data => {
+      const fullData = [];
+
+      const selected = new Date(date);
+      const weekStart = new Date(selected);
+      weekStart.setDate(selected.getDate() - selected.getDay() + 1);
+
+      for (let i = 0; i < 7; i++) {
+        const day = new Date(weekStart);
+        day.setDate(weekStart.getDate() + i);
+        const label = formatWeekday(day);
+
+        fullData.push({
+          날짜: label,
+          생산량: data.production_by_day[i],
+          불량률: data.defect_by_day[i],
+          손실률: data.loss_by_day[i],
+          매출액: data.revenue_by_day[i]
+        });
+      }
+
+      exportToCSV(`주간현황_${date}.csv`, fullData);
+    });
+}
+
+
+// ▶ 월간 CSV 전체 저장
+function exportMonthCSV() {
+  const date = document.getElementById('selected-date').value;
+  fetch(`/api/production_month?date=${date}`)
+    .then(res => res.json())
+    .then(data => {
+      const fullData = [];
+      for (let i = 0; i < 6; i++) {
+        fullData.push({
+          주차: `${i + 1}주차`,
+          생산량: data.production_by_week[i],
+          불량률: data.defect_by_week[i],
+          손실률: data.loss_by_week[i],
+          매출액: data.revenue_by_week[i]
+        });
+      }
+      exportToCSV(`월간현황_${date}.csv`, fullData);
+    });
+}
+
+// ✅ 테이블 렌더링: 0값 제외
+
+function renderDailyTable(data) {
+  const tbody = document.getElementById('table-body');
+  tbody.innerHTML = '';
+  for (let i = 0; i < 24; i++) {
+    const prod = data.production_by_hour[i];
+    const loss = data.loss_by_hour[i];
+    const defect = data.defect_by_hour[i];
+    const revenue = data.revenue_by_hour[i];
+    if (prod === 0 && loss === 0 && defect === 0 && revenue === 0) continue;
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${i}시</td><td>${prod}</td><td>${defect}</td><td>${loss}</td><td>${revenue}</td>`;
+    tbody.appendChild(row);
+  }
+}
+
+function formatWeekday(dateObj) {
+  const weekdayNames = ['일', '월', '화', '수', '목', '금', '토'];
+  const yyyy = dateObj.getFullYear();
+  const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const dd = String(dateObj.getDate()).padStart(2, '0');
+  const weekday = weekdayNames[dateObj.getDay()];
+  return `${yyyy}-${mm}-${dd} (${weekday})`;
+}
+
+function renderWeeklyTable(data) {
+  const tbody = document.querySelector('#tab-content-week tbody');
+  tbody.innerHTML = '';
+
+  // 📌 선택된 날짜로부터 해당 주의 월요일 계산
+  const selected = new Date(selectedDate);
+  const weekStart = new Date(selected);
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);  // 월요일 기준
+
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(weekStart);
+    currentDate.setDate(weekStart.getDate() + i);  // i일 더한 날짜
+
+    const label = formatWeekday(currentDate);  // "YYYY-MM-DD (요일)" 형식
+
+    const prod = data.production_by_day[i];
+    const loss = data.loss_by_day[i];
+    const defect = data.defect_by_day[i];
+    const revenue = data.revenue_by_day[i];
+
+    if (prod === 0 && loss === 0 && defect === 0 && revenue === 0) continue;
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${label}</td>
+      <td>${prod}</td>
+      <td>${defect}</td>
+      <td>${loss}</td>
+      <td>${revenue}</td>
+    `;
+    tbody.appendChild(row);
+  }
+}
+
+function renderMonthlyTable(data) {
+  const tbody = document.querySelector('#tab-content-month tbody');
+  tbody.innerHTML = '';
+  for (let i = 0; i < 6; i++) {
+    const prod = data.production_by_week[i];
+    const loss = data.loss_by_week[i];
+    const defect = data.defect_by_week[i];
+    const revenue = data.revenue_by_week[i];
+    if (prod === 0 && loss === 0 && defect === 0 && revenue === 0) continue;
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${monthLabels[i]}</td><td>${prod}</td><td>${defect}</td><td>${loss}</td><td>${revenue}</td>`;
+    tbody.appendChild(row);
+  }
+}
+ 
+// ✅ 탭 및 날짜 처리
+function setTab(el, tabId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.tab-sheet').forEach(c => c.style.display = 'none');
+  document.getElementById('tab-content-' + tabId).style.display = 'block';
+}
+
+function onDateChange() {
+  const input = document.getElementById("selected-date");
+  if (!input || !input.value) {
+    alert("날짜를 선택해주세요.");
+    return;
+  }
+  selectedDate = input.value;
+  fetchDayData();
+  fetchWeekData();
+  fetchMonthData(); 
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const input = document.getElementById("selected-date");
+  if (!input.value) input.value = new Date().toISOString().slice(0, 10);
+  selectedDate = input.value;
+  if (selectedDate) {
+    setTab(document.querySelector('.tab.active'), 'day');
+    fetchDayData();
+    fetchWeekData();
+    fetchMonthData();
+  }
+});
+
+</script>
+<script>
+  function toggleDatePicker() {
+    const popup = document.getElementById("datepicker-popup");
+    popup.style.display = popup.style.display === "block" ? "none" : "block";
+  }
+
+  function applySelectedDate() {
+    const input = document.getElementById("datepicker-input");
+    const display = document.getElementById("selected-date-text");
+
+    if (input && input.value) {
+      display.textContent = input.value;
+      document.getElementById("selected-date").value = input.value;  // 기존 input에도 값 넣기
+      onDateChange();  // 기존 기능 호출
+    }
+
+    // 팝업 닫기
+    document.getElementById("datepicker-popup").style.display = "none";
+  }
+</script>
+<input type="hidden" id="selected-date" value="{{ selected_date or '' }}">
+
+
+{% endblock %}
