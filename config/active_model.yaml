@@ -1,0 +1,23 @@
+model_path: models\20250616_RF_r2_0.9565_mae_0.0048.pkl
+scaler_path: models\Khold_scaler.pkl
+feature_names_path: models\Khold_feature_names.pkl
+performance:
+  r2: 0.9565429399428822
+  mse: 7.715650788267544e-05
+  rmse: !!python/object/apply:numpy._core.multiarray.scalar
+  - !!python/object/apply:numpy.dtype
+    args:
+    - f8
+    - false
+    - true
+    state: !!python/tuple
+    - 3
+    - <
+    - null
+    - null
+    - null
+    - -1
+    - -1
+    - 0
+  - !!binary |
+    Z0J6HEj9gT8=
